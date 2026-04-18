@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TradePilot U | The Trading Coach</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="TradePilot U">
+    <meta name="theme-color" content="#0f111a">
+    
+    <link rel="manifest" href='data:application/json,{"name":"TradePilot U","short_name":"TradePilot","start_url":".","display":"standalone","background_color":"#0f111a","theme_color":"#8b5cf6","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2965/2965315.png","sizes":"512x512","type":"image/png"}]}'>
+    
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965315.png">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root {
@@ -30,6 +38,8 @@
             padding: 20px;
             font-size: 14px;
         }
+	overscroll-behavior-y: contain; /* Prevents unwanted browser refresh */
+
 
         .container { max-width: 1400px; margin: 0 auto; }
         .hidden { display: none !important; }
@@ -326,6 +336,20 @@
     window.onload = () => {
         loadSettings();
         setupAIControls();
+
+        // Register Virtual Service Worker for Mobile Install
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('fetch', function(event) {
+                    // This allows the app to be installable
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).then(() => {
+                console.log('Mobile Bridge Active');
+            });
+        }
     };
 
     function loadSettings() {
