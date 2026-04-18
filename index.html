@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TradePilot U | The Trading Coach</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0f111a;
+            --bg-card: #1b1e2b;
+            --bg-panel: #23273a;
+            --text-main: #e0e6ed;
+            --text-muted: #94a3b8;
+            --accent: #8b5cf6; /* Cyberpunk Purple */
+            --accent-hover: #7c3aed;
+            --profit: #10b981;
+            --loss: #ef4444;
+            --border: #2d3748;
+            --font-stack: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        * { box-sizing: border-box; outline: none; }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            margin: 0;
+            padding: 20px;
+            font-size: 14px;
+        }
+
+        .container { max-width: 1400px; margin: 0 auto; }
+        .hidden { display: none !important; }
+        
+        /* Utility Classes */
+        .text-green { color: var(--profit); }
+        .text-red { color: var(--loss); }
+        .flex-row { display: flex; align-items: center; gap: 10px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Loaders */
+        .loader {
+            border: 3px solid var(--bg-card); border-top: 3px solid var(--accent);
+            border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* --- CONTROLS & HEADER --- */
+        .top-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;
+        }
+        
+        .logo h1 { margin: 0; font-size: 1.5rem; letter-spacing: 1px; }
+        .logo span { color: var(--accent); }
+
+        .settings-btn {
+            background: none; border: none; color: var(--text-muted); 
+            font-size: 1.2rem; cursor: pointer; transition: color 0.3s;
+        }
+        .settings-btn:hover { color: var(--accent); }
+
+        .control-panel {
+            background: var(--bg-card); padding: 15px; border-radius: 12px;
+            border: 1px solid var(--border); margin-bottom: 20px;
+            display: flex; gap: 15px; flex-wrap: wrap; align-items: center;
+        }
+
+        select, input[type="text"] {
+            background: var(--bg-dark); color: var(--text-main);
+            border: 1px solid var(--border); padding: 10px; border-radius: 6px;
+            min-width: 200px;
+        }
+
+        button {
+            background: var(--bg-dark); border: 1px solid var(--accent);
+            color: var(--accent); padding: 10px 20px; border-radius: 6px;
+            cursor: pointer; font-weight: 600; transition: all 0.2s;
+        }
+        button:hover { background: var(--accent); color: white; }
+        button.primary { background: var(--accent); color: white; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+        /* --- DASHBOARD STATS --- */
+        .stats-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-card); padding: 15px; border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+        .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .stat-value { font-size: 18px; font-weight: 700; }
+
+        /* --- TABLES --- */
+        .table-container {
+            background: var(--bg-card); border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border); margin-bottom: 20px;
+        }
+        .table-header {
+            padding: 12px 15px; background: rgba(255,255,255,0.03);
+            border-bottom: 1px solid var(--border); font-weight: 700; color: var(--text-muted);
+            display: flex; justify-content: space-between;
+        }
+        .db-table-wrapper { width: 100%; overflow-x: auto; }
+        
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+        th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+        tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* --- AI LAB --- */
+        .ai-section {
+            border-top: 1px solid var(--border); padding-top: 30px; margin-top: 30px;
+        }
+        .ai-grid {
+            display: grid; grid-template-columns: 300px 1fr; gap: 20px;
+        }
+        @media (max-width: 900px) { .ai-grid { grid-template-columns: 1fr; } }
+
+        .ai-sidebar {
+            background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border);
+            height: fit-content;
+        }
+        .ai-main { display: flex; flex-direction: column; gap: 20px; }
+
+        .checkbox-group {
+            display: flex; flex-direction: column; gap: 8px; margin: 10px 0 20px 0;
+            max-height: 200px; overflow-y: auto;
+        }
+        .checkbox-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-muted); }
+        
+        .memory-box {
+            background: rgba(139, 92, 246, 0.1); border: 1px dashed var(--accent);
+            padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 12px;
+            color: var(--text-muted); max-height: 150px; overflow-y: auto;
+        }
+
+        textarea.prompt-editor {
+            width: 100%; height: 150px; background: var(--bg-dark); border: 1px solid var(--border);
+            color: var(--text-main); padding: 15px; border-radius: 8px; resize: vertical;
+            font-family: monospace; line-height: 1.4;
+        }
+
+        .ai-response {
+            background: var(--bg-card); padding: 25px; border-radius: 12px;
+            border-left: 4px solid var(--accent); min-height: 100px;
+            line-height: 1.6; color: var(--text-muted);
+        }
+        .ai-response strong { color: var(--text-main); }
+
+        /* --- MODAL --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 1000;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .modal-content {
+            background: var(--bg-card); padding: 30px; border-radius: 12px;
+            width: 90%; max-width: 500px; border: 1px solid var(--border);
+        }
+        .modal input { width: 100%; margin-bottom: 15px; margin-top: 5px; }
+        .modal label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
+        
+        .tag-input {
+            width: 100%; margin-bottom: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="top-bar">
+        <div class="logo">
+            <h1>TradePilot<span>U</span></h1>
+        </div>
+        <button class="settings-btn" onclick="toggleSettings()">⚙️</button>
+    </div>
+
+    <div class="control-panel">
+        <div id="connection-status" class="text-muted" style="font-size:12px; margin-right: auto;">
+            ⚪ Disconnected
+        </div>
+        
+        <button id="btn-connect" onclick="fetchSheetList()">Connect & Fetch Sheets</button>
+        
+        <select id="sheet-selector" class="hidden" onchange="lazyLoadData()">
+            <option value="" disabled selected>Select Log Sheet...</option>
+        </select>
+    </div>
+
+    <div id="dashboard-content" class="hidden">
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Net Profit</div>
+                <div class="stat-value" id="stat-pnl">0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value" id="stat-winrate">0%</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Trades</div>
+                <div class="stat-value" id="stat-trades">0</div>
+            </div>
+             <div class="stat-card">
+                <div class="stat-label">Profit Factor</div>
+                <div class="stat-value" id="stat-pf">0.00</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                <span>Symbol Performance (Grouped by Magic ID)</span>
+            </div>
+            <div class="db-table-wrapper">
+                <table id="table-symbols">
+                    <thead>
+                        <tr>
+                            <th>Symbol (Magic)</th>
+                            <th>Count</th>
+                            <th>Win Rate</th>
+                            <th>Net Profit</th>
+                            <th>Avg MAE</th>
+                            <th>Avg Wait Alpha</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="ai-section">
+            <h2 style="margin-bottom:20px; color:var(--text-main)">🧠 AI Coach & Memory Lab</h2>
+            
+            <div class="ai-grid">
+                <div class="ai-sidebar">
+    <h4 style="margin-top:0;">1. Select Data Source</h4>
+    <select id="ai-symbol-filter" onchange="fetchMemoryForSymbol()">
+        <option value="ALL">All Symbols</option>
+    </select>
+
+    <h4 style="margin-top:20px;">2. Include Metrics</h4>
+    <div class="checkbox-group" id="ai-columns">
+        </div>
+
+    <h4 style="margin-top:20px;">3. Memory Bank</h4>
+    <div class="memory-box" id="memory-container">
+        Waiting for symbol selection...
+    </div>
+
+    NEW: EXPERIMENT HYPOTHESIS & DROPDOWN <--- -->
+    <h4 style="margin-top:20px;">4. Strategy Context</h4>
+    <select id="ai-strategy-selector" onchange="applyStrategyTemplate()" style="width:100%; margin-bottom:10px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); padding:8px; border-radius:6px;">
+        <option value="">-- Select or type below --</option>
+    </select>
+    
+    <textarea id="ai-hypothesis" onkeyup="setupPromptEditor()" placeholder="Describe the strategy or select from above..." style="width:100%; height:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:inherit; resize:vertical;"></textarea>
+</div>
+
+                <div class="ai-main">
+                    <div>
+                        <div class="flex-between">
+                            <h4>4. The Coach's Prompt</h4>
+                            <button class="primary" onclick="runAnalysis()" id="btn-analyze">Run Simulation</button>
+                        </div>
+                        <textarea id="ai-prompt" class="prompt-editor"></textarea>
+                    </div>
+
+                    <div id="ai-output" class="ai-response hidden"></div>
+
+                    <div id="archive-controls" class="hidden" style="background:var(--bg-panel); padding:15px; border-radius:8px; display:flex; gap:10px; align-items:flex-end;">
+                        <div style="flex-grow:1;">
+                            <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:12px;">Report Title</label>
+                            <input type="text" id="report-title" placeholder="e.g., Gold Optimization Jan 12" style="width:100%;">
+                        </div>
+                         <div style="flex-grow:1;">
+                            <label style="display:block; color:var(--text-muted); margin-bottom:5px; font-size:12px;">Tags</label>
+                            <input type="text" id="report-tags" placeholder="e.g., scalping, boom" style="width:100%;">
+                        </div>
+                        <button onclick="archiveInsight()" id="btn-archive">📂 Archive Insight</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="hidden modal">
+    <div class="modal-content">
+        <h2 style="margin-top:0">System Configuration</h2>
+        
+        <label>Google Apps Script Web App URL</label>
+        <input type="text" id="set-url" placeholder="https://script.google.com/..." >
+        
+        <label>Gemini API Key</label>
+        <input type="text" id="set-key" placeholder="AIza..." >
+        
+        <div style="text-align:right; margin-top:20px;">
+            <button onclick="toggleSettings()">Cancel</button>
+            <button class="primary" onclick="saveSettings()">Save Configuration</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- STATE MANAGEMENT ---
+    const STATE = {
+        config: { url: '', key: '' },
+        sheetList: [],
+        currentData: [],
+        processedStats: {},
+        memory: [],
+	lexicon: "",
+	strategies: [],
+        universalCols: {}
+    };
+
+    // --- INITIALIZATION ---
+    window.onload = () => {
+        loadSettings();
+        setupAIControls();
+    };
+
+    function loadSettings() {
+        STATE.config.url = localStorage.getItem('tp_url') || '';
+        STATE.config.key = localStorage.getItem('tp_key') || '';
+        if(!STATE.config.url) toggleSettings();
+    }
+
+    function saveSettings() {
+        const url = document.getElementById('set-url').value.trim();
+        const key = document.getElementById('set-key').value.trim();
+        if(url && key) {
+            localStorage.setItem('tp_url', url);
+            localStorage.setItem('tp_key', key);
+            STATE.config.url = url;
+            STATE.config.key = key;
+            toggleSettings();
+            updateStatus("🟢 Config Loaded");
+        } else {
+            alert("Both fields are required.");
+        }
+    }
+
+    function toggleSettings() {
+        const modal = document.getElementById('settings-modal');
+        if(modal.classList.contains('hidden')) {
+            document.getElementById('set-url').value = STATE.config.url;
+            document.getElementById('set-key').value = STATE.config.key;
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    function updateStatus(msg) {
+        document.getElementById('connection-status').innerText = msg;
+    }
+
+    // --- STEP 1: HANDSHAKE & SHEET LIST ---
+    async function fetchSheetList() {
+        const btn = document.getElementById('btn-connect');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> Connecting...';
+        
+        try {
+            // Fetch Request: action=getSheets
+            const response = await fetch(`${STATE.config.url}?action=getSheets`);
+            const json = await response.json();
+
+            // NEW: Fetch Lexicon and Strategies silently in the background
+            fetch(`${STATE.config.url}?action=getLexicon`)
+                .then(res => res.json())
+                .then(lexJson => { 
+                    STATE.lexicon = lexJson.data.terms; 
+                    STATE.strategies = lexJson.data.strategies;
+                    populateStrategyDropdown(); // Build the strategy dropdown menu
+                })
+                .catch(e => console.log("Lexicon offline"));
+            
+            if(json.status === 'success') {
+                // Filter sheets containing "Log" (case insensitive)
+                const logSheets = json.data.filter(s => s.toLowerCase().includes('log'));
+                
+                const selector = document.getElementById('sheet-selector');
+                selector.innerHTML = '<option value="" disabled selected>Select Log Sheet...</option>';
+                
+                logSheets.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.innerText = s;
+                    selector.appendChild(opt);
+                });
+
+                document.getElementById('btn-connect').classList.add('hidden');
+                selector.classList.remove('hidden');
+                updateStatus("🟢 Connected. Select a sheet.");
+            } else {
+                throw new Error("API Error");
+            }
+        } catch(e) {
+            console.error(e);
+            updateStatus("🔴 Connection Failed");
+            alert("Check URL or Console for errors.");
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Connect & Fetch Sheets";
+        }
+    }
+    // --- STEP 2: LAZY LOAD DATA ---
+    async function lazyLoadData() {
+        const sheetName = document.getElementById('sheet-selector').value;
+        if(!sheetName) return;
+
+        updateStatus(`⏳ Fetching ${sheetName}...`);
+        document.getElementById('dashboard-content').classList.add('hidden');
+
+        try {
+            const response = await fetch(`${STATE.config.url}?action=getData&sheet_name=${sheetName}`);
+            const json = await response.json();
+            
+            if(!json.data || json.data.length < 2) throw new Error("Empty Sheet");
+
+            processData(json.data);
+            
+            document.getElementById('dashboard-content').classList.remove('hidden');
+            updateStatus(`🟢 Loaded: ${sheetName}`);
+            
+            // Trigger Memory Fetch for "ALL" initially
+            fetchMemoryForSymbol();
+
+        } catch(e) {
+            console.error(e);
+            updateStatus("🔴 Data Load Error");
+        }
+    }
+
+    function processData(rawData) {
+        STATE.currentData = rawData;
+        const headers = rawData[0].map(h => String(h).toLowerCase().trim());
+        
+        // Dynamic Universal Mapping
+        const map = {
+            symbol: headers.findIndex(h => h.includes('symbol')),
+            magic: headers.findIndex(h => h.includes('magic')),
+            pnl: headers.findIndex(h => h.includes('profit') || h.includes('pnl')),
+            mae: headers.findIndex(h => h.includes('mae usd')),
+            waitAlpha: headers.findIndex(h => h.includes('wait alpha')),
+            status: headers.findIndex(h => h.includes('status'))
+        };
+        STATE.universalCols = map;
+
+        const stats = {};
+        let globalPnl = 0;
+        let globalWins = 0;
+        let globalTrades = 0;
+        let grossWin = 0;
+        let grossLoss = 0;
+
+        // Populate Symbol Filter for AI
+        const symbolSet = new Set();
+
+        for(let i=1; i<rawData.length; i++) {
+            const row = rawData[i];
+            const sym = row[map.symbol];
+            const mag = row[map.magic] || 'Manual';
+            const pnl = parseFloat(row[map.pnl]) || 0;
+            const status = row[map.status];
+
+            // Only process closed/valid trades
+            if(!sym) continue;
+            symbolSet.add(sym);
+
+            // Grouping Key: Symbol + Magic
+            const key = `${sym} (${mag})`;
+
+            if(!stats[key]) {
+                stats[key] = { 
+                    name: key, symbol: sym, count: 0, pnl: 0, wins: 0, 
+                    maeSum: 0, waitAlphaSum: 0
+                };
+            }
+
+            stats[key].count++;
+            stats[key].pnl += pnl;
+            globalPnl += pnl;
+            globalTrades++;
+
+            if(pnl > 0) {
+                stats[key].wins++;
+                globalWins++;
+                grossWin += pnl;
+            } else {
+                grossLoss += Math.abs(pnl);
+            }
+
+            if(map.mae > -1) stats[key].maeSum += (parseFloat(row[map.mae]) || 0);
+            if(map.waitAlpha > -1) stats[key].waitAlphaSum += (parseFloat(row[map.waitAlpha]) || 0);
+        }
+
+        STATE.processedStats = Object.values(stats);
+
+        // Update UI Stats
+        document.getElementById('stat-pnl').innerText = globalPnl.toFixed(2);
+        document.getElementById('stat-pnl').className = `stat-value ${globalPnl >= 0 ? 'text-green' : 'text-red'}`;
+        document.getElementById('stat-trades').innerText = globalTrades;
+        document.getElementById('stat-winrate').innerText = ((globalWins/globalTrades)*100).toFixed(1) + '%';
+        const pf = grossLoss === 0 ? grossWin : (grossWin/grossLoss);
+        document.getElementById('stat-pf').innerText = pf.toFixed(2);
+
+        // Update AI Filter Dropdown
+        const aiSelect = document.getElementById('ai-symbol-filter');
+        aiSelect.innerHTML = '<option value="ALL">All Symbols</option>';
+        symbolSet.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s;
+            opt.innerText = s;
+            aiSelect.appendChild(opt);
+        });
+
+        renderTable();
+	setupAIControls();
+        setupPromptEditor();
+    }
+
+    function renderTable() {
+        const tbody = document.querySelector('#table-symbols tbody');
+        tbody.innerHTML = '';
+
+        STATE.processedStats.sort((a,b) => b.pnl - a.pnl).forEach(s => {
+            const tr = document.createElement('tr');
+            const winRate = ((s.wins/s.count)*100).toFixed(0);
+            const avgMae = (s.maeSum/s.count).toFixed(2);
+            const avgWait = (s.waitAlphaSum/s.count).toFixed(2);
+            
+            tr.innerHTML = `
+                <td><strong>${s.name}</strong></td>
+                <td>${s.count}</td>
+                <td>${winRate}%</td>
+                <td class="${s.pnl >= 0 ? 'text-green' : 'text-red'}">${s.pnl.toFixed(2)}</td>
+                <td class="${avgMae < -10 ? 'text-red' : ''}">${avgMae}</td>
+                <td class="${avgWait > 0 ? 'text-green' : ''}">${avgWait}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // --- STEP 3: AI LAB & MEMORY ---
+    
+    function setupAIControls() {
+        // Clear the container first
+        const container = document.getElementById('ai-columns');
+        container.innerHTML = '';
+
+        // If no data is loaded yet, stop.
+        if (!STATE.currentData || STATE.currentData.length === 0) return;
+
+        // Get ALL headers from Row 1 of your Google Sheet
+        const headers = STATE.currentData[0];
+        
+        headers.forEach(header => {
+            if (!header || header.trim() === "") return; // Skip empty columns
+            
+            // Optional: Define which columns should be checked by default to save time
+            const defaultChecked = ['profit', 'mae', 'wait', 'symbol', 'magic'].some(kw => 
+                String(header).toLowerCase().includes(kw)
+            );
+
+            const div = document.createElement('div');
+            div.className = 'checkbox-item';
+            div.innerHTML = `<input type="checkbox" value="${header}" ${defaultChecked ? 'checked' : ''}> ${header}`;
+            container.appendChild(div);
+        });
+    }
+
+    async function fetchMemoryForSymbol() {
+        const symbol = document.getElementById('ai-symbol-filter').value;
+        const memBox = document.getElementById('memory-container');
+        memBox.innerHTML = '<span class="loader"></span> Recalling history...';
+
+        try {
+            // Action: getInsights
+            const url = `${STATE.config.url}?action=getInsights&symbol=${symbol === 'ALL' ? '' : symbol}`;
+            const response = await fetch(url);
+            const json = await response.json();
+
+            STATE.memory = json.data || [];
+            
+            if(STATE.memory.length === 0) {
+                memBox.innerText = "No past memories found for " + symbol;
+            } else {
+                memBox.innerHTML = STATE.memory.map(m => `
+                    <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(139, 92, 246, 0.2);">
+                        <strong>${m.date}</strong>: ${m.insight}
+                    </div>
+                `).join('');
+            }
+            
+            setupPromptEditor(); // Re-build prompt with new memory
+
+        } catch(e) {
+            console.log("Memory Fetch Warning:", e);
+            memBox.innerText = "Memory Module Offline (or no data).";
+            STATE.memory = [];
+            setupPromptEditor();
+        }
+    }
+	function populateStrategyDropdown() {
+        const selector = document.getElementById('ai-strategy-selector');
+        // Clear existing options except the default
+        selector.innerHTML = '<option value="">-- Select or type below --</option>';
+        
+        STATE.strategies.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.description; // The value is the definition (Column D)
+            opt.innerText = s.name;    // The visible text is the name (Column C)
+            selector.appendChild(opt);
+        });
+    }
+
+    function applyStrategyTemplate() {
+        const selector = document.getElementById('ai-strategy-selector');
+        const textarea = document.getElementById('ai-hypothesis');
+        
+        // If a strategy is selected, auto-fill the textarea
+        if (selector.value !== "") {
+            textarea.value = selector.value;
+        }
+        
+        // Instantly update the hidden AI Prompt with the new text
+        setupPromptEditor(); 
+    }
+
+
+    function setupPromptEditor() {
+        const symbol = document.getElementById('ai-symbol-filter').value;
+        const memoryText = STATE.memory.map(m => `- ${m.date}: ${m.insight}`).join('\n') || "No prior history recorded for this asset.";
+        const lexiconText = STATE.lexicon || "No custom terminology defined."; // Restored the Lexicon!
+
+        const template = `### SYSTEM IDENTITY & MISSION
+You are the Chief Quantitative Analyst for "TradePilot U". 
+Your mission: Review experimental demo-account data to identify highly profitable, low-drawdown "Sniper" strategies that are ready to be deployed to live capital.
+
+### THE DATA DICTIONARY (LEXICON)
+*Use these definitions to understand custom column headers in the data:*
+${lexiconText}
+
+### RULES OF ENGAGEMENT
+1. BE SKEPTICAL: Before giving advice, critically evaluate if the sample size (Count) is statistically significant to form a reliable conclusion.
+2. BLIND SPOTS: You can only see the data columns the user selected. If a crucial metric is missing that would explain the performance, demand it.
+3. NEVER REPEAT MISTAKES: Cross-reference the Current Data with the [PAST MEMORY]. If an idea failed previously, do not suggest it again.
+
+### PAST MEMORY (YOUR PREVIOUS DIRECTIVES)
+${memoryText}
+
+### CURRENT EXPERIMENT DATA
+Target Analysis: ${symbol}
+[Data will be inserted here on execution based on your filters]
+
+### REQUIRED REPORT FORMAT
+You must format your response strictly using these 5 Markdown sections:
+
+#### 1. 🔬 STATISTICAL VALIDITY & BLIND SPOTS
+* **Data Confidence:** [High / Low] - Is the sample size robust enough?
+* **Missing Metrics:** [List specific columns I need to checkmark next time to give you a clearer picture].
+
+#### 2. 📊 THE LABORATORY BREAKDOWN
+* Analyze the provided metrics. 
+* Identify the exact scenarios where the strategy wins and where it bleeds cash (e.g., compare MAE risk vs. Net Profit reward).
+* Did specific filters (like Wait Alpha or Timeframe) improve the entry or cost opportunity?
+
+#### 3. 🛠️ CALIBRATION ORDERS (Parameter Tweaks)
+* If the setup is failing or sub-optimal, provide 1 to 3 surgical adjustments to test in the next demo run. 
+* *Example:* "Increase Wait Time to 15m," or "Tighten Stop Loss to 20 pips based on Average MAE."
+
+#### 4. 🚀 THE MASTER DIRECTIVE (Next Steps)
+* Provide explicit, binary instructions on the macro next step.
+* **PATH A (Need More Data):** If the setup is incomplete, tell me exactly what to do next. (e.g., "Run 50 more trades on Demo. Checkmark [Metric A] and [Metric B] so I can verify trend strength.")
+* **PATH B (Ready for Live):** If the data is sufficient, statistically significant, and highly profitable, declare the "Optimal Sniper Setup" with exact parameters ready for live capital deployment.
+
+#### 5. 💾 [MACHINE_MEMORY_BITE]
+*Write a highly compressed, single-sentence summary designed STRICTLY for YOU to read in future simulations. Keep it robotic and factual.*
+*Format Example:* [SYMBOL] - [SETUP/METRIC TESTED] - [RESULT: WHY IT WON OR FAILED].`;
+
+        document.getElementById('ai-prompt').value = template;
+    }
+
+    async function runAnalysis() {
+        const btn = document.getElementById('btn-analyze');
+        const output = document.getElementById('ai-output');
+        const promptRaw = document.getElementById('ai-prompt').value;
+        
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> Simulating...';
+        output.classList.remove('hidden');
+        output.innerHTML = "Thinking...";
+
+        try {
+            // 1. Prepare Data Slice
+            const symbol = document.getElementById('ai-symbol-filter').value;
+            const headers = STATE.currentData[0];
+            
+            // Get checked columns
+            const checkboxes = document.querySelectorAll('#ai-columns input:checked');
+            if (checkboxes.length === 0) throw new Error("Please select at least one metric.");
+            
+            const targetCols = Array.from(checkboxes).map(cb => cb.value.toLowerCase());
+            const indices = targetCols.map(tc => headers.findIndex(h => String(h).toLowerCase().includes(tc))).filter(i => i > -1);
+            
+            // Filter Rows
+            let csvText = headers.filter((_, i) => indices.includes(i)).join(',') + "\n";
+            let rowCount = 0;
+            
+            for(let i=1; i<STATE.currentData.length; i++) {
+                if(rowCount > 150) break; // Increased to 150 since Pro models handle context easily
+                const row = STATE.currentData[i];
+                // Check symbol filter
+                if(symbol !== "ALL" && !String(row[STATE.universalCols.symbol]).includes(symbol)) continue;
+
+                const rowStr = row.filter((_, idx) => indices.includes(idx)).join(',');
+                csvText += rowStr + "\n";
+                rowCount++;
+            }
+
+            const finalPrompt = promptRaw.replace("[Data will be inserted here on execution based on your filters]", csvText);
+
+            // 2. Define the Model Hierarchy (Most Powerful -> Stable -> Fast)
+            const modelsToTry = [
+                "gemini-3.1-pro-preview", 
+                "gemini-2.5-pro",         
+                "gemini-2.5-flash"        
+            ];
+
+            let result = null;
+            let successfulModel = "";
+
+            // 3. Fallback Execution Loop
+            for (const model of modelsToTry) {
+                try {
+                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${STATE.config.key}`;
+                    
+                    const response = await fetch(geminiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
+                    });
+
+                    const jsonResponse = await response.json();
+                    
+                    // If the API returns a known error structure, throw to trigger fallback
+                    if (jsonResponse.error) throw new Error(jsonResponse.error.message);
+                    if (!jsonResponse.candidates || jsonResponse.candidates.length === 0) throw new Error("Empty response");
+
+                    // If we made it here, the model succeeded!
+                    result = jsonResponse;
+                    successfulModel = model;
+                    break; // Exit the loop
+                    
+                } catch (e) {
+                    console.warn(`Attempt with ${model} failed: ${e.message}. Trying next...`);
+                    // The loop automatically continues to the next model in the array
+                }
+            }
+
+            // If the loop finishes and result is still null, all 3 models failed.
+            if (!result) {
+                throw new Error("All AI models failed to respond. Please check your API key or network connection.");
+            }
+
+            const aiText = result.candidates[0].content.parts[0].text;
+            
+            // 4. Render
+            // Display a small badge showing which model answered, so you know if a fallback triggered
+            const modelBadge = `<div style="font-size: 10px; color: var(--text-muted); text-align: right; margin-bottom: 10px;">Powered by: ${successfulModel}</div>`;
+            
+            output.innerHTML = modelBadge + marked.parse(aiText);
+            document.getElementById('archive-controls').classList.remove('hidden');
+
+        } catch(e) {
+            console.error(e);
+            output.innerHTML = `<span class="text-red" style="font-weight:bold;">Error: ${e.message}</span>`;
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "Run Simulation";
+        }
+    }
+
+
+    // --- STEP 4: SERVER-SIDE ARCHIVE ---
+    async function archiveInsight() {
+        const btn = document.getElementById('btn-archive');
+        const title = document.getElementById('report-title').value;
+        const tags = document.getElementById('report-tags').value;
+        const insightHtml = document.getElementById('ai-output').innerHTML;
+        const statsHtml = document.getElementById('table-symbols').outerHTML; // Snapshot of table
+        
+        if(!title) { alert("Please enter a Report Title"); return; }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loader"></span> Archiving...';
+
+        try {
+            // We construct a full HTML document string to send to backend for PDF conversion
+            const fullReportHtml = `
+                <html>
+                <head><style>body{font-family:sans-serif; color:#333;} h2{color:#8b5cf6;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #ccc; padding:5px;}</style></head>
+                <body>
+                    <h1>TradePilot Report: ${title}</h1>
+                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
+                    <p><strong>Tags:</strong> ${tags}</p>
+                    <hr>
+                    <h2>AI Analyst Verdict</h2>
+                    ${insightHtml}
+                    <hr>
+                    <h2>Performance Snapshot</h2>
+                    ${statsHtml}
+                </body>
+                </html>
+            `;
+
+            // Payload for GAS
+            const payload = {
+                action: 'archiveReport',
+                title: title,
+                tags: tags,
+                insightText: document.getElementById('ai-output').innerText.substring(0, 500) + "...", // Summary for Sheet
+                htmlContent: fullReportHtml
+            };
+
+            // Use sendBeacon or standard fetch (POST)
+            // Note: GAS doPost requires text/plain or specific handling to avoid CORS issues sometimes, 
+            // but standard JSON usually works if backend is set up right. 
+            // We'll use no-cors if simple trigger, but we need response. 
+            // We will assume standard POST.
+          // --- UPDATED FETCH BLOCK ---
+            // Using text/plain bypasses the CORS preflight check 
+            // so Google Apps Script actually receives the payload.
+            const response = await fetch(STATE.config.url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' }, 
+                body: JSON.stringify(payload)
+            });
+
+            // We can now read the actual response from the server!
+            const result = await response.json();
+            
+            if(result.status === "error") throw new Error(result.message);
+
+            alert("Archive Successful! PDF saved to Drive and Memory logged.");
+            document.getElementById('archive-controls').classList.add('hidden');
+
+        } catch(e) {
+            console.error(e);
+            alert("Archive Failed: " + e.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerText = "📂 Archive Insight";
+        }
+    }
+
+</script>
+</body>
+</html>
