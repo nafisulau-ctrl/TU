@@ -2,25 +2,48 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+	<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TradePilot U">
+<meta name="theme-color" content="#0f111a">
+
+<link rel="manifest" id="pwa-manifest">
+
+<link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2534/2534062.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TradePilot U | The Trading Coach</title>
-<meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="TradePilot U">
-    <meta name="theme-color" content="#0f111a">
-    
-    <link rel="manifest" href='data:application/json,{"name":"TradePilot U","short_name":"TradePilot","start_url":".","display":"standalone","background_color":"#0f111a","theme_color":"#8b5cf6","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2965/2965315.png","sizes":"512x512","type":"image/png"}]}'>
-    
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/2965/2965315.png">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
+	#library-list p {
+    word-break: break-word; /* Prevents long words from breaking the layout */
+    max-height: 400px;      /* Adds a scrollbar if the text is EXTREMELY long */
+    overflow-y: auto;
+    padding-right: 5px;
+}
+	
+	/* Add this to your <style> section */
+#library-list .stat-card {
+    transition: transform 0.2s, border-color 0.2s;
+    cursor: default;
+}
+
+#library-list .stat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+}
+
+#library-list .stat-card a:hover {
+    text-decoration: underline;
+    color: white !important;
+}
+	
         :root {
             --bg-dark: #0f111a;
             --bg-card: #1b1e2b;
             --bg-panel: #23273a;
             --text-main: #e0e6ed;
             --text-muted: #94a3b8;
-            --accent: #8b5cf6; /* Cyberpunk Purple */
+            --accent: #8b5cf6;
             --accent-hover: #7c3aed;
             --profit: #10b981;
             --loss: #ef4444;
@@ -38,26 +61,57 @@
             padding: 20px;
             font-size: 14px;
         }
-	overscroll-behavior-y: contain; /* Prevents unwanted browser refresh */
 
+        .container { 
+            max-width: 1200px; 
+            margin: 0 auto; 
+            width: 100%;
+            padding-bottom: 50px;
+        }
 
-        .container { max-width: 1400px; margin: 0 auto; }
-        .hidden { display: none !important; }
+        /* --- FINAL TABLE SCROLL FIX --- */
+        .matrix-wrapper {
+            width: 100%;
+            max-width: 100%; /* Forces it to stay inside the parent's width */
+            overflow-x: auto; 
+            background: var(--bg-card);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            margin-top: 10px;
+            display: block;
+        }
+
+        /* This ensures the table actually triggers the scrollbar */
+        .matrix-wrapper table {
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            width: auto; /* Allow it to be wider than the container */
+            min-width: 100%; 
+        }
+
+        .matrix-wrapper th, 
+        .matrix-wrapper td {
+            white-space: nowrap; /* Prevents text wrapping, forcing horizontal width */
+            padding: 12px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .matrix-wrapper::-webkit-scrollbar { height: 8px; }
+        .matrix-wrapper::-webkit-scrollbar-track { background: var(--bg-dark); }
+        .matrix-wrapper::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 4px; }
         
-        /* Utility Classes */
+        .hidden { display: none !important; }
         .text-green { color: var(--profit); }
         .text-red { color: var(--loss); }
-        .flex-row { display: flex; align-items: center; gap: 10px; }
         .flex-between { display: flex; justify-content: space-between; align-items: center; }
         
-        /* Loaders */
         .loader {
             border: 3px solid var(--bg-card); border-top: 3px solid var(--accent);
             border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; display: inline-block;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* --- CONTROLS & HEADER --- */
         .top-bar {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 15px;
@@ -93,7 +147,6 @@
         button.primary { background: var(--accent); color: white; }
         button:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
-        /* --- DASHBOARD STATS --- */
         .stats-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 15px; margin-bottom: 20px;
@@ -105,7 +158,6 @@
         .stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
         .stat-value { font-size: 18px; font-weight: 700; }
 
-        /* --- TABLES --- */
         .table-container {
             background: var(--bg-card); border-radius: 12px; overflow: hidden;
             border: 1px solid var(--border); margin-bottom: 20px;
@@ -122,12 +174,13 @@
         th { color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
         tr:hover { background: rgba(255,255,255,0.02); }
 
-        /* --- AI LAB --- */
         .ai-section {
             border-top: 1px solid var(--border); padding-top: 30px; margin-top: 30px;
         }
         .ai-grid {
-            display: grid; grid-template-columns: 300px 1fr; gap: 20px;
+            display: grid; 
+            grid-template-columns: 300px minmax(0, 1fr); /* minmax(0, 1fr) is the key fix */
+            gap: 20px;
         }
         @media (max-width: 900px) { .ai-grid { grid-template-columns: 1fr; } }
 
@@ -162,7 +215,6 @@
         }
         .ai-response strong { color: var(--text-main); }
 
-        /* --- MODAL --- */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8); z-index: 1000;
@@ -175,10 +227,6 @@
         .modal input { width: 100%; margin-bottom: 15px; margin-top: 5px; }
         .modal label { color: var(--text-muted); font-size: 12px; text-transform: uppercase; }
         
-        .tag-input {
-            width: 100%; margin-bottom: 10px;
-        }
-
     </style>
 </head>
 <body>
@@ -247,40 +295,76 @@
         </div>
 
         <div class="ai-section">
-            <h2 style="margin-bottom:20px; color:var(--text-main)">🧠 AI Coach & Memory Lab</h2>
-            
+<div class="flex-between" style="margin-bottom:20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;">
+    <h2 style="margin:0; color:var(--text-main)">🧠 AI Coach & Memory Lab</h2>
+    <button onclick="toggleLibrary()" id="btn-library-toggle" style="background:none; border:1px solid var(--border); color:var(--text-muted); font-size:12px; padding: 5px 15px;">📚 Research Library</button>
+</div>            
             <div class="ai-grid">
                 <div class="ai-sidebar">
-    <h4 style="margin-top:0;">1. Select Data Source</h4>
-    <select id="ai-symbol-filter" onchange="fetchMemoryForSymbol()">
-        <option value="ALL">All Symbols</option>
-    </select>
+                    <h4 style="margin-top:0;">1. Select Data Sources (A-Z)</h4>
+                    <div class="checkbox-group" id="ai-symbol-list" style="max-height: 150px; border: 1px solid var(--border); padding: 10px; border-radius: 6px;">
+                    </div>
 
-    <h4 style="margin-top:20px;">2. Include Metrics</h4>
-    <div class="checkbox-group" id="ai-columns">
-        </div>
+                    <h4 style="margin-top:20px;">2. Include Metrics</h4>
+                    <div class="checkbox-group" id="ai-columns">
+                    </div>
 
-    <h4 style="margin-top:20px;">3. Memory Bank</h4>
-    <div class="memory-box" id="memory-container">
-        Waiting for symbol selection...
+			<h4 style="margin-top:20px;">3. Data Filters (Post-Mortem)</h4>
+<div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
+    <div>
+        <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Trade Result</label>
+        <select id="filter-result" style="width: 100%; min-width: 0; padding: 5px; background: var(--bg-card); color: white; border: 1px solid var(--border); border-radius: 4px;">
+            <option value="all">All Trades</option>
+            <option value="loss">Only Losses (< $0)</option>
+            <option value="win">Only Wins (> $0)</option>
+        </select>
     </div>
-
-    NEW: EXPERIMENT HYPOTHESIS & DROPDOWN <--- -->
-    <h4 style="margin-top:20px;">4. Strategy Context</h4>
-    <select id="ai-strategy-selector" onchange="applyStrategyTemplate()" style="width:100%; margin-bottom:10px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); padding:8px; border-radius:6px;">
-        <option value="">-- Select or type below --</option>
-    </select>
-    
-    <textarea id="ai-hypothesis" onkeyup="setupPromptEditor()" placeholder="Describe the strategy or select from above..." style="width:100%; height:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:inherit; resize:vertical;"></textarea>
+    <div style="display: flex; gap: 8px;">
+        <div style="flex: 1;">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Min MAE ($)</label>
+            <input type="number" id="filter-mae-min" placeholder="0" style="width: 100%; background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 5px; border-radius: 4px;">
+        </div>
+        <div style="flex: 1;">
+            <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Min Alpha</label>
+            <input type="number" id="filter-alpha-min" placeholder="0" style="width: 100%; background: var(--bg-panel); border: 1px solid var(--border); color: white; padding: 5px; border-radius: 4px;">
+        </div>
+    </div>
 </div>
+
+                    <h4 style="margin-top:20px;">3. Memory Bank</h4>
+                    <div class="memory-box" id="memory-container">
+                        Waiting for selection...
+                    </div>
+
+                    <h4 style="margin-top:20px;">4. Strategy Context</h4>
+                    <select id="ai-strategy-selector" onchange="applyStrategyTemplate()" style="width:100%; margin-bottom:10px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); padding:8px; border-radius:6px;">
+                        <option value="">-- Select or type below --</option>
+                    </select>
+                    
+                    <textarea id="ai-hypothesis" onkeyup="setupPromptEditor()" placeholder="Describe the strategy..." style="width:100%; height:80px; background:var(--bg-dark); color:var(--text-main); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:inherit; resize:vertical;"></textarea>
+                </div>
 
                 <div class="ai-main">
                     <div>
                         <div class="flex-between">
-                            <h4>4. The Coach's Prompt</h4>
-                            <button class="primary" onclick="runAnalysis()" id="btn-analyze">Run Simulation</button>
-                        </div>
+    <h4>4. The Coach's Prompt</h4>
+    <div style="display: flex; gap: 15px; align-items: center; background: var(--bg-dark); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--border); margin-right: 10px;">
+        <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+            <input type="radio" name="ai-data-depth" value="summary" checked onchange="setupPromptEditor()"> Summary Only
+        </label>
+        <label style="font-size: 11px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+            <input type="radio" name="ai-data-depth" value="full" onchange="setupPromptEditor()"> Summary + Raw Data
+        </label>
+    </div>
+    <button class="primary" onclick="runAnalysis()" id="btn-analyze">Run Simulation</button>
+
+</div>
                         <textarea id="ai-prompt" class="prompt-editor"></textarea>
+                    </div>
+
+                    <div id="ai-matrix-display" class="hidden" style="margin-bottom: 20px;">
+                        <h4 style="margin-top:0; color:var(--accent)">📊 Current Experiment Summary</h4>
+                        <div class="matrix-wrapper" id="matrix-table-content"></div>
                     </div>
 
                     <div id="ai-output" class="ai-response hidden"></div>
@@ -302,6 +386,12 @@
     </div>
 </div>
 
+<div id="library-section" class="hidden" style="margin-top: 60px; border-top: 2px solid var(--accent); padding-top: 30px; margin-bottom: 80px;">
+    <h2 style="color: var(--accent); margin-bottom: 20px;">📚 Research Library</h2>
+    <div id="library-list" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+        </div>
+</div>
+
 <div id="settings-modal" class="hidden modal">
     <div class="modal-content">
         <h2 style="margin-top:0">System Configuration</h2>
@@ -311,6 +401,8 @@
         
         <label>Gemini API Key</label>
         <input type="text" id="set-key" placeholder="AIza..." >
+
+        <button id="pwa-install-btn" class="hidden" onclick="installApp()" style="width:100%; margin-bottom:20px; border-color:var(--profit); color:var(--profit); margin-top: 10px;">📲 Install as Mobile App</button>
         
         <div style="text-align:right; margin-top:20px;">
             <button onclick="toggleSettings()">Cancel</button>
@@ -320,35 +412,87 @@
 </div>
 
 <script>
-    // --- STATE MANAGEMENT ---
+
+	let deferredPrompt;
+
+function initPWA() {
+    // 1. Generate Manifest as Data URI
+    const manifest = {
+        "name": "TradePilot U Dashboard",
+        "short_name": "TradePilot",
+        "description": "Professional Trading AI Dashboard",
+        "start_url": ".",
+        "display": "standalone",
+        "background_color": "#0f111a",
+        "theme_color": "#8b5cf6",
+        "icons": [
+            {
+                "src": "https://cdn-icons-png.flaticon.com/512/2534/2534062.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    };
+    
+    const manifestStr = JSON.stringify(manifest);
+    const manifestURI = "data:application/manifest+json;base64," + btoa(unescape(encodeURIComponent(manifestStr)));
+    document.getElementById('pwa-manifest').setAttribute('href', manifestURI);
+
+    // 2. Register Virtual Service Worker via Blob
+    if ('serviceWorker' in navigator) {
+        const swCode = `
+            self.addEventListener('install', (e) => self.skipWaiting());
+            self.addEventListener('activate', (e) => e.waitUntil(self.clients.claim()));
+            self.addEventListener('fetch', (e) => {
+                // Mandatory fetch handler for PWA installation
+                e.respondWith(fetch(e.request).catch(() => {}));
+            });
+        `;
+        
+        const blob = new Blob([swCode], { type: 'text/javascript' });
+        const swUrl = URL.createObjectURL(blob);
+        
+        navigator.serviceWorker.register(swUrl, { scope: './' }).then(() => {
+            console.log("PWA: Virtual Service Worker Active");
+        }).catch(err => console.warn("PWA: SW Registration failed (Likely non-HTTPS)", err));
+    }
+
+    // 3. Catch the Install Prompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // Show an install button in settings if it exists
+        const installBtn = document.getElementById('pwa-install-btn');
+        if(installBtn) installBtn.classList.remove('hidden');
+    });
+}
+
+// Function to trigger installation manually
+async function installApp() {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') deferredPrompt = null;
+}
     const STATE = {
         config: { url: '', key: '' },
-        sheetList: [],
         currentData: [],
         processedStats: {},
         memory: [],
-	lexicon: "",
-	strategies: [],
+        lexicon: "",
+        strategies: [],
         universalCols: {}
     };
 
-    // --- INITIALIZATION ---
-    window.onload = () => {
+    window.onload = async () => {
         loadSettings();
         setupAIControls();
-
-        // Register Virtual Service Worker for Mobile Install
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                self.addEventListener('fetch', function(event) {
-                    // This allows the app to be installable
-                });
-            `;
-            const blob = new Blob([swCode], { type: 'text/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).then(() => {
-                console.log('Mobile Bridge Active');
-            });
+		initPWA();
+        
+        // Fetch Lexicon/Strategies immediately if the URL is saved
+        if (STATE.config.url) {
+            fetchLexicon();
         }
     };
 
@@ -356,6 +500,26 @@
         STATE.config.url = localStorage.getItem('tp_url') || '';
         STATE.config.key = localStorage.getItem('tp_key') || '';
         if(!STATE.config.url) toggleSettings();
+    }
+	
+	async function fetchLexicon() {
+        try {
+            console.log("Lexicon Sync: Initiating...");
+            const response = await fetch(`${STATE.config.url}?action=getLexicon`);
+            const json = await response.json();
+            
+            if (json.status === 'success') {
+                STATE.lexicon = json.data.terms; 
+                STATE.strategies = json.data.strategies;
+                
+                populateStrategyDropdown(); 
+                setupPromptEditor(); // CRITICAL: This pushes the data into the prompt box
+                
+                console.log("Lexicon Sync: Success. Terms loaded:", STATE.lexicon);
+            }
+        } catch (e) {
+            console.warn("Lexicon Sync: Offline/Error", e);
+        }
     }
 
     function saveSettings() {
@@ -373,6 +537,69 @@
         }
     }
 
+async function toggleLibrary() {
+    const lib = document.getElementById('library-section');
+    const btn = document.getElementById('btn-library-toggle');
+    
+    // 1. Toggle the visibility class
+    lib.classList.toggle('hidden');
+    
+    if (!lib.classList.contains('hidden')) {
+        // 2. Update button text
+        if (btn) btn.innerText = "Close Library";
+        
+        // 3. FIX: Explicitly await the load so it fetches BEFORE scrolling
+        await loadLibrary();
+        
+        // 4. FIX: Smooth scroll to the library so it appears at the bottom correctly
+        setTimeout(() => {
+            lib.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100); 
+    } else {
+        // 5. Restore original button text
+        if (btn) btn.innerText = "📚 Research Library";
+    }
+}
+
+async function loadLibrary() {
+    const list = document.getElementById('library-list');
+    list.innerHTML = '<div style="grid-column: 1/-1; text-align:center;"><span class="loader"></span> Loading Archives...</div>';
+    
+    try {
+        const response = await fetch(`${STATE.config.url}?action=getArchivedReports`);
+        const json = await response.json();
+        
+        if (!json.data || json.data.length === 0) {
+            list.innerHTML = "<p style='grid-column:1/-1; color:var(--text-muted);'>No archived reports found.</p>";
+            return;
+        }
+
+        list.innerHTML = json.data.map(r => {
+            // FIX: Remove truncation to show the full text from Column C
+            const fullSummaryText = r["Insight Summary"] || "No summary available.";
+            
+            return `
+            <div class="stat-card" style="background: var(--bg-card); border-left: 4px solid var(--accent); position: relative; height: auto;">
+                <div style="font-size: 10px; color: var(--accent); margin-bottom: 10px; display: flex; justify-content: space-between;">
+                    <span>${new Date(r.Date).toLocaleDateString()}</span>
+                    <a href="${r["Drive Link"]}" target="_blank" style="color: var(--accent); text-decoration: none; font-weight: bold;">VIEW PDF ↗</a>
+                </div>
+                <h4 style="margin: 0 0 10px 0; color: var(--text-main);">${r["Report Title"]}</h4>
+                
+                <p style="font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px; white-space: pre-wrap;">
+                    ${fullSummaryText}
+                </p>
+                
+                <div style="font-size: 10px; background: var(--bg-dark); padding: 4px 8px; border-radius: 4px; display: inline-block; color: var(--text-muted);">
+                    🏷️ ${r.Tags || 'no-tags'}
+                </div>
+            </div>
+        `}).join('');
+    } catch (e) {
+        list.innerHTML = "<p style='color:var(--loss);'>Error loading library data.</p>";
+    }
+}
+
     function toggleSettings() {
         const modal = document.getElementById('settings-modal');
         if(modal.classList.contains('hidden')) {
@@ -388,31 +615,19 @@
         document.getElementById('connection-status').innerText = msg;
     }
 
-    // --- STEP 1: HANDSHAKE & SHEET LIST ---
     async function fetchSheetList() {
         const btn = document.getElementById('btn-connect');
         btn.disabled = true;
         btn.innerHTML = '<span class="loader"></span> Connecting...';
         
         try {
-            // Fetch Request: action=getSheets
             const response = await fetch(`${STATE.config.url}?action=getSheets`);
             const json = await response.json();
 
-            // NEW: Fetch Lexicon and Strategies silently in the background
-            fetch(`${STATE.config.url}?action=getLexicon`)
-                .then(res => res.json())
-                .then(lexJson => { 
-                    STATE.lexicon = lexJson.data.terms; 
-                    STATE.strategies = lexJson.data.strategies;
-                    populateStrategyDropdown(); // Build the strategy dropdown menu
-                })
-                .catch(e => console.log("Lexicon offline"));
+            // REMOVED: The redundant lexicon fetch that was missing the UI update
             
             if(json.status === 'success') {
-                // Filter sheets containing "Log" (case insensitive)
                 const logSheets = json.data.filter(s => s.toLowerCase().includes('log'));
-                
                 const selector = document.getElementById('sheet-selector');
                 selector.innerHTML = '<option value="" disabled selected>Select Log Sheet...</option>';
                 
@@ -426,19 +641,24 @@
                 document.getElementById('btn-connect').classList.add('hidden');
                 selector.classList.remove('hidden');
                 updateStatus("🟢 Connected. Select a sheet.");
+                
+                // TRIGGER the proper lexicon sync function
+                fetchLexicon(); 
             } else {
                 throw new Error("API Error");
             }
-        } catch(e) {
+        } 
+        catch(e) {
             console.error(e);
             updateStatus("🔴 Connection Failed");
             alert("Check URL or Console for errors.");
-        } finally {
+        }
+        finally {
             btn.disabled = false;
             btn.innerText = "Connect & Fetch Sheets";
         }
     }
-    // --- STEP 2: LAZY LOAD DATA ---
+
     async function lazyLoadData() {
         const sheetName = document.getElementById('sheet-selector').value;
         if(!sheetName) return;
@@ -457,7 +677,6 @@
             document.getElementById('dashboard-content').classList.remove('hidden');
             updateStatus(`🟢 Loaded: ${sheetName}`);
             
-            // Trigger Memory Fetch for "ALL" initially
             fetchMemoryForSymbol();
 
         } catch(e) {
@@ -470,7 +689,6 @@
         STATE.currentData = rawData;
         const headers = rawData[0].map(h => String(h).toLowerCase().trim());
         
-        // Dynamic Universal Mapping
         const map = {
             symbol: headers.findIndex(h => h.includes('symbol')),
             magic: headers.findIndex(h => h.includes('magic')),
@@ -482,88 +700,57 @@
         STATE.universalCols = map;
 
         const stats = {};
-        let globalPnl = 0;
-        let globalWins = 0;
-        let globalTrades = 0;
-        let grossWin = 0;
-        let grossLoss = 0;
-
-        // Populate Symbol Filter for AI
+        let globalPnl = 0, globalWins = 0, globalTrades = 0, grossWin = 0, grossLoss = 0;
         const symbolSet = new Set();
 
         for(let i=1; i<rawData.length; i++) {
             const row = rawData[i];
             const sym = row[map.symbol];
-            const mag = row[map.magic] || 'Manual';
-            const pnl = parseFloat(row[map.pnl]) || 0;
-            const status = row[map.status];
-
-            // Only process closed/valid trades
             if(!sym) continue;
             symbolSet.add(sym);
 
-            // Grouping Key: Symbol + Magic
+            const mag = row[map.magic] || 'Manual';
+            const pnl = parseFloat(row[map.pnl]) || 0;
             const key = `${sym} (${mag})`;
 
-            if(!stats[key]) {
-                stats[key] = { 
-                    name: key, symbol: sym, count: 0, pnl: 0, wins: 0, 
-                    maeSum: 0, waitAlphaSum: 0
-                };
-            }
-
+            if(!stats[key]) stats[key] = { name: key, symbol: sym, count: 0, pnl: 0, wins: 0, maeSum: 0, waitAlphaSum: 0 };
             stats[key].count++;
             stats[key].pnl += pnl;
             globalPnl += pnl;
             globalTrades++;
-
-            if(pnl > 0) {
-                stats[key].wins++;
-                globalWins++;
-                grossWin += pnl;
-            } else {
-                grossLoss += Math.abs(pnl);
-            }
-
+            if(pnl > 0) { stats[key].wins++; globalWins++; grossWin += pnl; } else { grossLoss += Math.abs(pnl); }
             if(map.mae > -1) stats[key].maeSum += (parseFloat(row[map.mae]) || 0);
             if(map.waitAlpha > -1) stats[key].waitAlphaSum += (parseFloat(row[map.waitAlpha]) || 0);
         }
 
         STATE.processedStats = Object.values(stats);
-
-        // Update UI Stats
         document.getElementById('stat-pnl').innerText = globalPnl.toFixed(2);
-        document.getElementById('stat-pnl').className = `stat-value ${globalPnl >= 0 ? 'text-green' : 'text-red'}`;
         document.getElementById('stat-trades').innerText = globalTrades;
-        document.getElementById('stat-winrate').innerText = ((globalWins/globalTrades)*100).toFixed(1) + '%';
-        const pf = grossLoss === 0 ? grossWin : (grossWin/grossLoss);
-        document.getElementById('stat-pf').innerText = pf.toFixed(2);
+        document.getElementById('stat-winrate').innerText = (globalTrades === 0 ? "0%" : ((globalWins/globalTrades)*100).toFixed(1) + '%');
+        document.getElementById('stat-pf').innerText = (grossLoss === 0 ? grossWin : (grossWin/grossLoss)).toFixed(2);
 
-        // Update AI Filter Dropdown
-        const aiSelect = document.getElementById('ai-symbol-filter');
-        aiSelect.innerHTML = '<option value="ALL">All Symbols</option>';
-        symbolSet.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s;
-            opt.innerText = s;
-            aiSelect.appendChild(opt);
+        const aiSymbolList = document.getElementById('ai-symbol-list');
+        aiSymbolList.innerHTML = '';
+        Array.from(symbolSet).sort().forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'checkbox-item';
+            div.innerHTML = `<input type="checkbox" class="symbol-cb" value="${s}" onchange="fetchMemoryForSymbol()"> ${s}`;
+            aiSymbolList.appendChild(div);
         });
 
         renderTable();
-	setupAIControls();
+        setupAIControls();
         setupPromptEditor();
     }
 
     function renderTable() {
         const tbody = document.querySelector('#table-symbols tbody');
         tbody.innerHTML = '';
-
         STATE.processedStats.sort((a,b) => b.pnl - a.pnl).forEach(s => {
             const tr = document.createElement('tr');
             const winRate = ((s.wins/s.count)*100).toFixed(0);
             const avgMae = (s.maeSum/s.count).toFixed(2);
             const avgWait = (s.waitAlphaSum/s.count).toFixed(2);
-            
             tr.innerHTML = `
                 <td><strong>${s.name}</strong></td>
                 <td>${s.count}</td>
@@ -576,75 +763,77 @@
         });
     }
 
-    // --- STEP 3: AI LAB & MEMORY ---
-    
     function setupAIControls() {
-        // Clear the container first
         const container = document.getElementById('ai-columns');
         container.innerHTML = '';
-
-        // If no data is loaded yet, stop.
         if (!STATE.currentData || STATE.currentData.length === 0) return;
-
-        // Get ALL headers from Row 1 of your Google Sheet
         const headers = STATE.currentData[0];
-        
         headers.forEach(header => {
-            if (!header || header.trim() === "") return; // Skip empty columns
-            
-            // Optional: Define which columns should be checked by default to save time
-            const defaultChecked = ['profit', 'mae', 'wait', 'symbol', 'magic'].some(kw => 
-                String(header).toLowerCase().includes(kw)
-            );
-
+            if (!header || header.trim() === "") return;
             const div = document.createElement('div');
             div.className = 'checkbox-item';
-            div.innerHTML = `<input type="checkbox" value="${header}" ${defaultChecked ? 'checked' : ''}> ${header}`;
+            div.innerHTML = `<input type="checkbox" value="${header}" checked> ${header}`;
             container.appendChild(div);
         });
     }
 
     async function fetchMemoryForSymbol() {
-        const symbol = document.getElementById('ai-symbol-filter').value;
-        const memBox = document.getElementById('memory-container');
-        memBox.innerHTML = '<span class="loader"></span> Recalling history...';
+    const checkedSymbols = Array.from(document.querySelectorAll('.symbol-cb:checked')).map(cb => cb.value);
+    const memBox = document.getElementById('memory-container');
+    
+    // Refresh the prompt labels immediately
+    setupPromptEditor();
 
-        try {
-            // Action: getInsights
-            const url = `${STATE.config.url}?action=getInsights&symbol=${symbol === 'ALL' ? '' : symbol}`;
-            const response = await fetch(url);
-            const json = await response.json();
-
-            STATE.memory = json.data || [];
-            
-            if(STATE.memory.length === 0) {
-                memBox.innerText = "No past memories found for " + symbol;
-            } else {
-                memBox.innerHTML = STATE.memory.map(m => `
-                    <div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(139, 92, 246, 0.2);">
-                        <strong>${m.date}</strong>: ${m.insight}
-                    </div>
-                `).join('');
-            }
-            
-            setupPromptEditor(); // Re-build prompt with new memory
-
-        } catch(e) {
-            console.log("Memory Fetch Warning:", e);
-            memBox.innerText = "Memory Module Offline (or no data).";
-            STATE.memory = [];
-            setupPromptEditor();
-        }
+    if(checkedSymbols.length === 0) { 
+        memBox.innerText = "Select symbols to see memory..."; 
+        STATE.memory = [];
+        return; 
     }
-	function populateStrategyDropdown() {
-        const selector = document.getElementById('ai-strategy-selector');
-        // Clear existing options except the default
-        selector.innerHTML = '<option value="">-- Select or type below --</option>';
+    
+    memBox.innerHTML = '<span class="loader"></span> Recalling all history...';
+    try {
+        // Create a list of fetch requests for every checked symbol
+        const fetchPromises = checkedSymbols.map(sym => 
+            fetch(`${STATE.config.url}?action=getInsights&symbol=${sym}`)
+            .then(res => res.json())
+            .then(json => (json.data || []).map(m => ({...m, symbol: sym}))) // Tag each memory with its symbol
+        );
+
+        // Wait for all symbols to return their data
+        const results = await Promise.all(fetchPromises);
         
+        // Flatten the array of arrays into one single list
+        STATE.memory = results.flat();
+
+        if(STATE.memory.length === 0) {
+            memBox.innerText = "No memory found for these symbols.";
+        } else {
+            // Sort combined memory by date (newest first)
+            STATE.memory.sort((a,b) => new Date(b.date) - new Date(a.date));
+            
+            memBox.innerHTML = STATE.memory.map(m => `
+                <div style="margin-bottom:8px; padding-bottom:5px; border-bottom:1px solid rgba(255,255,255,0.05); font-size:11px;">
+                    <span style="color:var(--accent); font-weight:bold;">[${m.symbol}]</span> 
+                    <strong>${m.date}</strong>: ${m.insight}
+                </div>
+            `).join('');
+        }
+        
+        // Update the prompt with the newly aggregated memory
+        setupPromptEditor();
+    } catch(e) { 
+        console.error("Memory Fetch Error:", e);
+        memBox.innerText = "Memory Offline."; 
+    }
+}
+
+    function populateStrategyDropdown() {
+        const selector = document.getElementById('ai-strategy-selector');
+        selector.innerHTML = '<option value="">-- Select or type below --</option>';
         STATE.strategies.forEach(s => {
             const opt = document.createElement('option');
-            opt.value = s.description; // The value is the definition (Column D)
-            opt.innerText = s.name;    // The visible text is the name (Column C)
+            opt.value = s.description;
+            opt.innerText = s.name;
             selector.appendChild(opt);
         });
     }
@@ -653,65 +842,80 @@
         const selector = document.getElementById('ai-strategy-selector');
         const textarea = document.getElementById('ai-hypothesis');
         
-        // If a strategy is selected, auto-fill the textarea
         if (selector.value !== "") {
+            // Append the strategy description to the hypothesis
             textarea.value = selector.value;
+            
+            // Refresh the prompt so the AI sees the new strategy immediately
+            setupPromptEditor(); 
         }
-        
-        // Instantly update the hidden AI Prompt with the new text
-        setupPromptEditor(); 
     }
 
-
     function setupPromptEditor() {
-        const symbol = document.getElementById('ai-symbol-filter').value;
-        const memoryText = STATE.memory.map(m => `- ${m.date}: ${m.insight}`).join('\n') || "No prior history recorded for this asset.";
-        const lexiconText = STATE.lexicon || "No custom terminology defined."; // Restored the Lexicon!
 
-        const template = `### SYSTEM IDENTITY & MISSION
-You are the Chief Quantitative Analyst for "TradePilot U". 
-Your mission: Review experimental demo-account data to identify highly profitable, low-drawdown "Sniper" strategies that are ready to be deployed to live capital.
+const filterType = document.getElementById('filter-result')?.value || "all";
+const filterContext = filterType === "loss" ? "⚠️ POST-MORTEM MODE: You are ONLY seeing LOSING trades. Focus on why these failed." : "STANDARD MODE: You are viewing a general performance set.";
+    const checkedSymbols = Array.from(document.querySelectorAll('.symbol-cb:checked')).map(cb => cb.value);
+    const symbolLabel = checkedSymbols.length > 3 ? `${checkedSymbols.length} Symbols Selected` : (checkedSymbols.join(', ') || "None Selected");
+    
+const memoryText = STATE.memory.map(m => `- [${m.symbol}] ${m.date}: ${m.insight}`).join('\n') || "No prior history recorded for current selection.";    
+// 1. Ensure we trim the lexicon to avoid blank spaces triggering the "No data" message
+    const lexiconText = (STATE.lexicon && STATE.lexicon.trim().length > 0) 
+        ? STATE.lexicon 
+        : "No custom terminology defined in 'Lexicon' sheet.";
+    const hypothesis = document.getElementById('ai-hypothesis').value || "General Performance Review.";
 
-### THE DATA DICTIONARY (LEXICON)
-*Use these definitions to understand custom column headers in the data:*
-${lexiconText}
+    // Get the toggle state
+    const dataDepth = document.querySelector('input[name="ai-data-depth"]:checked')?.value || "summary";
+    
+    // Dynamic instruction based on depth
+    const depthInstruction = dataDepth === "full" 
+        ? "AUDIT MODE: You have been provided with the first 100 raw trade rows. Look for specific anomalies, time-of-day clusters, or MAE patterns in the raw data that the summary tables might hide."
+        : "STRATEGIST MODE: You only have the Summary Matrix. Focus on statistical significance, win rates per group, and high-level optimization of the variables provided.";
 
-### RULES OF ENGAGEMENT
-1. BE SKEPTICAL: Before giving advice, critically evaluate if the sample size (Count) is statistically significant to form a reliable conclusion.
-2. BLIND SPOTS: You can only see the data columns the user selected. If a crucial metric is missing that would explain the performance, demand it.
-3. NEVER REPEAT MISTAKES: Cross-reference the Current Data with the [PAST MEMORY]. If an idea failed previously, do not suggest it again.
+    const template = `### SYSTEM IDENTITY: THE TRADE-PILOT ORCHESTRATOR
+You are the Lead Quantitative Strategist. ${depthInstruction}
 
-### PAST MEMORY (YOUR PREVIOUS DIRECTIVES)
+### 1. MISSION CONTEXT & HYPOTHESIS
+* **Context:** ${filterContext}
+* **Target Symbol(s):** ${symbolLabel}
+* **Current Hypothesis:** ${hypothesis}
+* **Past History:**
 ${memoryText}
 
-### CURRENT EXPERIMENT DATA
-Target Analysis: ${symbol}
+### 2. DATA DICTIONARY
+${lexiconText}
+
+### 3. THE LAB PERFORMANCE (EDGE MATRIX)
+[The Edge Matrix Table will be inserted here]
+
+### 4. GRANULAR TRADE DATA (Top 100 Rows)
 [Data will be inserted here on execution based on your filters]
 
-### REQUIRED REPORT FORMAT
-You must format your response strictly using these 5 Markdown sections:
+### 5. YOUR OPERATING DIRECTIVES
+1. **The "Better or Worse" Check:** Compare this run to "Past History."
+2. **Path A (Iterate):** If data is messy, demand a specific change for the NEXT test run.
+3. **Path B (Winning Setup):** If data is consistent, declare final parameters.
 
-#### 1. 🔬 STATISTICAL VALIDITY & BLIND SPOTS
-* **Data Confidence:** [High / Low] - Is the sample size robust enough?
-* **Missing Metrics:** [List specific columns I need to checkmark next time to give you a clearer picture].
+---
+### REQUIRED REPORT FORMAT (DO NOT DEVIATE)
 
-#### 2. 📊 THE LABORATORY BREAKDOWN
-* Analyze the provided metrics. 
-* Identify the exact scenarios where the strategy wins and where it bleeds cash (e.g., compare MAE risk vs. Net Profit reward).
-* Did specific filters (like Wait Alpha or Timeframe) improve the entry or cost opportunity?
+#### 🔬 SCIENTIFIC VERDICT (Trial & Error Follow-up)
+* State clearly if this test succeeded or failed compared to the previous suggestion.
+* Identify the exact "Golden Combination" (e.g., M5 + Buy + 15m Wait) that is showing the most promise.
 
-#### 3. 🛠️ CALIBRATION ORDERS (Parameter Tweaks)
-* If the setup is failing or sub-optimal, provide 1 to 3 surgical adjustments to test in the next demo run. 
-* *Example:* "Increase Wait Time to 15m," or "Tighten Stop Loss to 20 pips based on Average MAE."
+#### 📊 DATA INSIGHTS & BLIND SPOTS
+* Analyze why specific groups are losing (e.g., "The M1 entries have too much MAE; they are catching spikes late").
 
-#### 4. 🚀 THE MASTER DIRECTIVE (Next Steps)
-* Provide explicit, binary instructions on the macro next step.
-* **PATH A (Need More Data):** If the setup is incomplete, tell me exactly what to do next. (e.g., "Run 50 more trades on Demo. Checkmark [Metric A] and [Metric B] so I can verify trend strength.")
-* **PATH B (Ready for Live):** If the data is sufficient, statistically significant, and highly profitable, declare the "Optimal Sniper Setup" with exact parameters ready for live capital deployment.
+#### 🛠️ THE NEXT EXPERIMENT (Step-by-Step Guidance)
+* Tell the user exactly what to change in the MT5 EA settings for the next run to reach a final conclusion.
 
-#### 5. 💾 [MACHINE_MEMORY_BITE]
-*Write a highly compressed, single-sentence summary designed STRICTLY for YOU to read in future simulations. Keep it robotic and factual.*
-*Format Example:* [SYMBOL] - [SETUP/METRIC TESTED] - [RESULT: WHY IT WON OR FAILED].`;
+#### 📝 [SETTINGS_NOTE_COPY_PASTE]
+*Provide a concise, 2-sentence note for the user to paste into their Google Sheet 'Settings' tab comment section.*
+*Format:* "TEST [Number]: [What was tested] | RESULT: [Keep/Change] | NEXT: [Immediate next instruction]."
+
+#### 💾 [MACHINE_MEMORY_BITE]
+*One compressed sentence for your own future reference.*`;
 
         document.getElementById('ai-prompt').value = template;
     }
@@ -719,176 +923,284 @@ You must format your response strictly using these 5 Markdown sections:
     async function runAnalysis() {
         const btn = document.getElementById('btn-analyze');
         const output = document.getElementById('ai-output');
-        const promptRaw = document.getElementById('ai-prompt').value;
+        const matrixDisplay = document.getElementById('ai-matrix-display');
+        const matrixContent = document.getElementById('matrix-table-content');
         
+        const selectedSymbols = Array.from(document.querySelectorAll('.symbol-cb:checked')).map(cb => cb.value);
+        if (selectedSymbols.length === 0) { alert("Select at least one symbol."); return; }
+
         btn.disabled = true;
-        btn.innerHTML = '<span class="loader"></span> Simulating...';
-        output.classList.remove('hidden');
-        output.innerHTML = "Thinking...";
+        btn.innerHTML = '<span class="loader"></span> Thinking...';
+        output.classList.add('hidden');
+        matrixDisplay.classList.add('hidden');
 
         try {
-            // 1. Prepare Data Slice
-            const symbol = document.getElementById('ai-symbol-filter').value;
+            const activeMetrics = Array.from(document.querySelectorAll('#ai-columns input:checked')).map(cb => cb.value);
             const headers = STATE.currentData[0];
-            
-            // Get checked columns
-            const checkboxes = document.querySelectorAll('#ai-columns input:checked');
-            if (checkboxes.length === 0) throw new Error("Please select at least one metric.");
-            
-            const targetCols = Array.from(checkboxes).map(cb => cb.value.toLowerCase());
-            const indices = targetCols.map(tc => headers.findIndex(h => String(h).toLowerCase().includes(tc))).filter(i => i > -1);
-            
-            // Filter Rows
-            let csvText = headers.filter((_, i) => indices.includes(i)).join(',') + "\n";
-            let rowCount = 0;
-            
-            for(let i=1; i<STATE.currentData.length; i++) {
-                if(rowCount > 150) break; // Increased to 150 since Pro models handle context easily
-                const row = STATE.currentData[i];
-                // Check symbol filter
-                if(symbol !== "ALL" && !String(row[STATE.universalCols.symbol]).includes(symbol)) continue;
+            const symIdx = STATE.universalCols.symbol;
+            const statIdx = STATE.universalCols.status;
+            const validStatuses = ["TP Hit", "SL Hit", "Stealth SL", "Manual/Broker Exit"];
 
-                const rowStr = row.filter((_, idx) => indices.includes(idx)).join(',');
-                csvText += rowStr + "\n";
-                rowCount++;
-            }
+            // 1. Get filter values from the new UI boxes
+    const filterResult = document.getElementById('filter-result').value;
+    const minMae = parseFloat(document.getElementById('filter-mae-min').value) || 0;
+    const minAlpha = parseFloat(document.getElementById('filter-alpha-min').value) || -999;
 
-            const finalPrompt = promptRaw.replace("[Data will be inserted here on execution based on your filters]", csvText);
+    // 2. Apply filtering to the trade data
+    const filteredRows = STATE.currentData.slice(1).filter(row => {
+        const symMatch = selectedSymbols.includes(String(row[symIdx]));
+        const statMatch = validStatuses.includes(String(row[statIdx]).trim());
+        
+        // Pull actual values from the row to check against filters
+        const profit = parseFloat(row[STATE.universalCols.pnl]) || 0;
+        const mae = Math.abs(parseFloat(row[STATE.universalCols.mae]) || 0); 
+        const alpha = parseFloat(row[STATE.universalCols.waitAlpha]) || 0;
 
-            // 2. Define the Model Hierarchy (Most Powerful -> Stable -> Fast)
+        // Logic for Win/Loss filter
+        let resultMatch = true;
+        if (filterResult === "loss") resultMatch = profit < 0;
+        if (filterResult === "win") resultMatch = profit > 0;
+
+        // Combine everything: Symbol + Status + Win/Loss + MAE threshold + Alpha threshold
+        return symMatch && statMatch && resultMatch && (mae >= minMae) && (alpha >= minAlpha);
+    });
+
+            if(filteredRows.length === 0) throw new Error("No closed trades found for selected symbols.");
+
+            const summaryData = [headers, ...filteredRows];
+            const summaryTables = generateSummaryTables(summaryData, activeMetrics);
+
+            matrixContent.innerHTML = marked.parse(summaryTables);
+            matrixDisplay.classList.remove('hidden');
+
+           // 1. Get the current text from the prompt editor
+const promptRaw = document.getElementById('ai-prompt').value;
+
+// 2. Insert the Edge Matrix (Summary Tables)
+let finalPrompt = promptRaw.replace("[The Edge Matrix Table will be inserted here]", summaryTables);
+
+// 3. Check the Toggle: Should we include raw data?
+const dataDepth = document.querySelector('input[name="ai-data-depth"]:checked').value;
+let csvText = "";
+
+if (dataDepth === "full") {
+    // Build the CSV header
+    csvText = headers.filter(h => activeMetrics.includes(h)).join(',') + "\n";
+    // Build the first 100 rows of trade data
+    filteredRows.slice(0, 100).forEach(r => {
+        csvText += r.filter((_, i) => activeMetrics.includes(headers[i])).join(',') + "\n";
+    });
+} else {
+    // If Summary Only is selected, we send this placeholder text instead
+    csvText = "--- RAW DATA OMITTED BY USER (SUMMARY MODE ACTIVE) ---";
+}
+
+// 4. Inject the data (or the omission note) into the prompt
+finalPrompt = finalPrompt.replace("[Data will be inserted here on execution based on your filters]", csvText);
+
+            // --- AI EXECUTION WITH ROBUST FALLBACK ---
             const modelsToTry = [
                 "gemini-3.1-pro-preview", 
                 "gemini-2.5-pro",         
                 "gemini-2.5-flash"        
             ];
 
-            let result = null;
+            let json = null;
             let successfulModel = "";
 
-            // 3. Fallback Execution Loop
             for (const model of modelsToTry) {
                 try {
-                    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${STATE.config.key}`;
-                    
-                    const response = await fetch(geminiUrl, {
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${STATE.config.key}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ contents: [{ parts: [{ text: finalPrompt }] }] })
                     });
-
-                    const jsonResponse = await response.json();
+                    const result = await response.json();
                     
-                    // If the API returns a known error structure, throw to trigger fallback
-                    if (jsonResponse.error) throw new Error(jsonResponse.error.message);
-                    if (!jsonResponse.candidates || jsonResponse.candidates.length === 0) throw new Error("Empty response");
-
-                    // If we made it here, the model succeeded!
-                    result = jsonResponse;
-                    successfulModel = model;
-                    break; // Exit the loop
-                    
+                    if (result.candidates && result.candidates[0]) {
+                        json = result;
+                        successfulModel = model;
+                        break; 
+                    }
                 } catch (e) {
-                    console.warn(`Attempt with ${model} failed: ${e.message}. Trying next...`);
-                    // The loop automatically continues to the next model in the array
+                    console.warn(`Model ${model} failed, trying next...`);
                 }
             }
 
-            // If the loop finishes and result is still null, all 3 models failed.
-            if (!result) {
-                throw new Error("All AI models failed to respond. Please check your API key or network connection.");
-            }
+            if (!json) throw new Error("All AI models failed. Please check your API key or connection.");
 
-            const aiText = result.candidates[0].content.parts[0].text;
-            
-            // 4. Render
-            // Display a small badge showing which model answered, so you know if a fallback triggered
-            const modelBadge = `<div style="font-size: 10px; color: var(--text-muted); text-align: right; margin-bottom: 10px;">Powered by: ${successfulModel}</div>`;
-            
-            output.innerHTML = modelBadge + marked.parse(aiText);
+            const aiText = json.candidates[0].content.parts[0].text;
+            output.innerHTML = marked.parse(aiText);
+            output.classList.remove('hidden');
             document.getElementById('archive-controls').classList.remove('hidden');
 
         } catch(e) {
-            console.error(e);
-            output.innerHTML = `<span class="text-red" style="font-weight:bold;">Error: ${e.message}</span>`;
+            output.classList.remove('hidden');
+            output.innerHTML = `<div class="text-red" style="padding:15px; border:1px solid var(--loss); border-radius:8px;"><strong>Error:</strong> ${e.message}</div>`;
         } finally {
             btn.disabled = false;
             btn.innerText = "Run Simulation";
         }
     }
 
-
-    // --- STEP 4: SERVER-SIDE ARCHIVE ---
-    async function archiveInsight() {
-        const btn = document.getElementById('btn-archive');
-        const title = document.getElementById('report-title').value;
-        const tags = document.getElementById('report-tags').value;
-        const insightHtml = document.getElementById('ai-output').innerHTML;
-        const statsHtml = document.getElementById('table-symbols').outerHTML; // Snapshot of table
-        
-        if(!title) { alert("Please enter a Report Title"); return; }
-
-        btn.disabled = true;
-        btn.innerHTML = '<span class="loader"></span> Archiving...';
-
-        try {
-            // We construct a full HTML document string to send to backend for PDF conversion
-            const fullReportHtml = `
-                <html>
-                <head><style>body{font-family:sans-serif; color:#333;} h2{color:#8b5cf6;} table{width:100%; border-collapse:collapse;} th,td{border:1px solid #ccc; padding:5px;}</style></head>
-                <body>
-                    <h1>TradePilot Report: ${title}</h1>
-                    <p><strong>Date:</strong> ${new Date().toLocaleString()}</p>
-                    <p><strong>Tags:</strong> ${tags}</p>
-                    <hr>
-                    <h2>AI Analyst Verdict</h2>
-                    ${insightHtml}
-                    <hr>
-                    <h2>Performance Snapshot</h2>
-                    ${statsHtml}
-                </body>
-                </html>
-            `;
-
-            // Payload for GAS
-            const payload = {
-                action: 'archiveReport',
-                title: title,
-                tags: tags,
-                insightText: document.getElementById('ai-output').innerText.substring(0, 500) + "...", // Summary for Sheet
-                htmlContent: fullReportHtml
-            };
-
-            // Use sendBeacon or standard fetch (POST)
-            // Note: GAS doPost requires text/plain or specific handling to avoid CORS issues sometimes, 
-            // but standard JSON usually works if backend is set up right. 
-            // We'll use no-cors if simple trigger, but we need response. 
-            // We will assume standard POST.
-          // --- UPDATED FETCH BLOCK ---
-            // Using text/plain bypasses the CORS preflight check 
-            // so Google Apps Script actually receives the payload.
-            const response = await fetch(STATE.config.url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain' }, 
-                body: JSON.stringify(payload)
-            });
-
-            // We can now read the actual response from the server!
-            const result = await response.json();
-            
-            if(result.status === "error") throw new Error(result.message);
-
-            alert("Archive Successful! PDF saved to Drive and Memory logged.");
-            document.getElementById('archive-controls').classList.add('hidden');
-
-        } catch(e) {
-            console.error(e);
-            alert("Archive Failed: " + e.message);
-        } finally {
-            btn.disabled = false;
-            btn.innerText = "📂 Archive Insight";
-        }
+async function archiveInsight() {
+    const btn = document.getElementById('btn-archive');
+    const aiOutputDiv = document.getElementById('ai-output');
+    
+    // 1. ROBUST PARSING: Get the plain text version of the AI response
+    const rawAiText = aiOutputDiv.innerText;
+    
+    let biteText = "";
+    const marker = "💾 [MACHINE_MEMORY_BITE]";
+    const markerIndex = rawAiText.indexOf(marker);
+    
+    if (markerIndex !== -1) {
+        // Grab everything AFTER the marker and trim extra spaces/newlines
+        biteText = rawAiText.substring(markerIndex + marker.length).trim();
+    } else {
+        // Fallback: If the bite isn't found, grab the first 200 characters of the whole response
+        biteText = rawAiText.substring(0, 200).trim() + "...";
     }
 
+    // 2. Prepare Meta Data
+    const symbols = Array.from(document.querySelectorAll('.symbol-cb:checked')).map(cb => cb.value).join(', ');
+    const userTitle = document.getElementById('report-title').value;
+    const finalTitle = userTitle || `${symbols} Audit - ${new Date().toLocaleDateString()}`;
+    const finalTags = document.getElementById('report-tags').value || symbols;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="loader"></span> Archiving...';
+
+    try {
+        const payload = {
+            action: 'archiveReport',
+            title: finalTitle,
+            tags: finalTags,
+            insightText: biteText, // This will now contain the text found after the emoji
+            htmlContent: aiOutputDiv.innerHTML
+        };
+
+        const response = await fetch(STATE.config.url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' }, 
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+        if(result.status === "error") throw new Error(result.message);
+        
+        alert("Archive Successful! The bite has been saved to your Knowledge Base.");
+        document.getElementById('archive-controls').classList.add('hidden');
+        loadLibrary(); 
+    } catch(e) {
+        console.error("Archive Error:", e);
+        alert("Archive Failed: " + e.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "📂 Archive Insight";
+    }
+}
+
+    function generateSummaryTables(data, activeMetrics) {
+    const headers = data[0].map(h => String(h).trim());
+    const rows = data.slice(1);
+    const validStatuses = ["TP Hit", "SL Hit", "Stealth SL", "Manual/Broker Exit"];
+    
+    // 1. SURGICAL FIX: Use STATE mapping to ensure all symbols are detected correctly
+    const symIdx = STATE.universalCols.symbol;
+    const magIdx = STATE.universalCols.magic;
+    const statIdx = STATE.universalCols.status;
+    const pnlIdx = STATE.universalCols.pnl;
+    
+    // Find dynamic columns that aren't in the global state
+    const typeIdx = headers.findIndex(h => h.toLowerCase().includes("type"));
+    const tfIdx = headers.findIndex(h => h.toLowerCase().includes("tf"));
+    const openTimeIdx = headers.findIndex(h => h.toLowerCase().includes("open time"));
+
+    const metricIndices = activeMetrics.map(m => ({
+        name: m,
+        idx: headers.findIndex(h => h === m)
+    })).filter(m => m.idx > -1 && m.idx !== pnlIdx);
+
+    const portfolio = {};
+    let minDate = new Date(8640000000000000);
+    let maxDate = new Date(-8640000000000000);
+
+    rows.forEach(row => {
+        const status = String(row[statIdx]).trim();
+        if (!validStatuses.includes(status)) return;
+
+        // Grouping logic: Ensure Symbol and Magic are both used to create unique keys
+        const sym = row[symIdx] || "Unknown";
+        const mag = row[magIdx] || "Manual";
+        const groupKey = `${sym} (${mag})`; 
+
+        const type = row[typeIdx] || "N/A";
+        const tf = row[tfIdx] || "N/A";
+        const profit = parseFloat(row[pnlIdx]) || 0;
+        
+        // Duration Tracking
+        if (openTimeIdx > -1) {
+            const openTime = new Date(row[openTimeIdx]);
+            if (openTime.getTime() < minDate.getTime()) minDate = openTime;
+            if (openTime.getTime() > maxDate.getTime()) maxDate = openTime;
+        }
+
+        if (!portfolio[groupKey]) portfolio[groupKey] = { byType: {}, byTF: {} };
+
+        const update = (obj, key) => {
+            if (!obj[key]) {
+                obj[key] = { count: 0, wins: 0, net: 0, metrics: {} };
+                metricIndices.forEach(m => obj[key].metrics[m.name] = 0);
+            }
+            obj[key].count++;
+            if (profit > 0) obj[key].wins++;
+            obj[key].net += profit;
+            metricIndices.forEach(m => {
+                const val = parseFloat(row[m.idx]) || 0;
+                obj[key].metrics[m.name] += val;
+            });
+        };
+
+        update(portfolio[groupKey].byType, type);
+        update(portfolio[groupKey].byTF, tf);
+    });
+
+    let output = `### 📅 ANALYSIS DURATION\n**Period:** ${minDate < new Date() ? minDate.toLocaleDateString() : 'Start'} to ${maxDate > new Date(0) ? maxDate.toLocaleDateString() : 'End'}\n\n`;
+    
+    // Iterate through EVERY group in the portfolio object
+    for (let key in portfolio) {
+        output += `#### 🧬 ASSET GROUP: ${key}\n`;
+        
+        let headerRow = `| Category | Sub-Group | Count | Win % | Net Profit |`;
+        let dividerRow = `| :--- | :--- | :--- | :--- | :--- |`;
+        metricIndices.forEach(m => {
+            headerRow += ` Avg ${m.name} |`;
+            dividerRow += ` :--- |`;
+        });
+        output += headerRow + "\n" + dividerRow + "\n";
+
+        const groups = [
+            { label: "Type", data: portfolio[key].byType }, 
+            { label: "TF", data: portfolio[key].byTF }
+        ];
+
+        groups.forEach(group => {
+            for (let sub in group.data) {
+                let s = group.data[sub];
+                let wr = ((s.wins / s.count) * 100).toFixed(1);
+                let rowStr = `| ${group.label} | ${sub} | ${s.count} | **${wr}%** | $${s.net.toFixed(2)} |`;
+                metricIndices.forEach(m => {
+                    let avg = (s.metrics[m.name] / s.count).toFixed(2);
+                    rowStr += ` ${avg} |`;
+                });
+                output += rowStr + "\n";
+            }
+        });
+        output += "\n";
+    }
+    return output;
+}
 </script>
 </body>
 </html>
