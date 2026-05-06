@@ -367,10 +367,18 @@
 <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
     <div>
         <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Trade Result</label>
-        <select id="filter-result" style="width: 100%; min-width: 0; padding: 5px; background: var(--bg-card); color: white; border: 1px solid var(--border); border-radius: 4px;">
+        <select id="filter-result" onchange="setupPromptEditor()" style="width: 100%; min-width: 0; padding: 5px; background: var(--bg-card); color: white; border: 1px solid var(--border); border-radius: 4px;">
             <option value="all">All Trades</option>
             <option value="loss">Only Losses (< $0)</option>
             <option value="win">Only Wins (> $0)</option>
+        </select>
+    </div>
+    <div>
+        <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Trade Type</label>
+        <select id="filter-side" onchange="setupPromptEditor()" style="width: 100%; min-width: 0; padding: 5px; background: var(--bg-card); color: white; border: 1px solid var(--border); border-radius: 4px;">
+            <option value="all">All Types</option>
+            <option value="buy">BUY Only</option>
+            <option value="sell">SELL Only</option>
         </select>
     </div>
     <div style="display: flex; gap: 8px;">
@@ -1024,7 +1032,9 @@ async function loadLibrary() {
     function setupPromptEditor() {
 
 const filterType = document.getElementById('filter-result')?.value || "all";
-const filterContext = filterType === "loss" ? "⚠️ POST-MORTEM MODE: You are ONLY seeing LOSING trades. Focus on why these failed." : "STANDARD MODE: You are viewing a general performance set.";
+const filterSide = document.getElementById('filter-side')?.value || "all";
+const sideContext = filterSide === "all" ? "" : ` Restricted to ${filterSide.toUpperCase()} trades.`;
+const filterContext = (filterType === "loss" ? "⚠️ POST-MORTEM MODE: You are ONLY seeing LOSING trades. Focus on why these failed." : "STANDARD MODE: You are viewing a general performance set.") + sideContext;
     const checkedSymbols = Array.from(document.querySelectorAll('.symbol-cb:checked')).map(cb => cb.value);
     const symbolLabel = checkedSymbols.length > 3 ? `${checkedSymbols.length} Symbols Selected` : (checkedSymbols.join(', ') || "None Selected");
     
@@ -1115,6 +1125,7 @@ ${lexiconText}
 
             // 1. Get filter values from the new UI boxes
     const filterResult = document.getElementById('filter-result').value;
+    const filterSide = document.getElementById('filter-side').value;
     const minMae = parseFloat(document.getElementById('filter-mae-min').value) || 0;
     const minAlpha = parseFloat(document.getElementById('filter-alpha-min').value) || -999;
 
@@ -1130,14 +1141,20 @@ ${lexiconText}
         const profit = parseProfit(row[STATE.universalCols.pnl]);
         const mae = Math.abs(parseProfit(row[STATE.universalCols.mae])); 
         const alpha = parseProfit(row[STATE.universalCols.waitAlpha]);
+        const type = (row[STATE.universalCols.type] || "").toString().toUpperCase();
 
         // Logic for Win/Loss filter
         let resultMatch = true;
         if (filterResult === "loss") resultMatch = profit < 0;
         if (filterResult === "win") resultMatch = profit > 0;
 
-        // Combine everything: Symbol + Status + Win/Loss + MAE threshold + Alpha threshold
-        return symMatch && statMatch && resultMatch && (mae >= minMae) && (alpha >= minAlpha);
+        // Logic for Type filter
+        let sideMatch = true;
+        if (filterSide === "buy") sideMatch = type.includes("BUY");
+        if (filterSide === "sell") sideMatch = type.includes("SELL");
+
+        // Combine everything: Symbol + Status + Win/Loss + Type + MAE threshold + Alpha threshold
+        return symMatch && statMatch && resultMatch && sideMatch && (mae >= minMae) && (alpha >= minAlpha);
     });
 
             if(filteredRows.length === 0) throw new Error("No closed trades found for selected symbols.");
