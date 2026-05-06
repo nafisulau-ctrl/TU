@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-	<meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="TradePilot U">
 <meta name="theme-color" content="#0f111a">
@@ -14,14 +14,14 @@
     <title>TradePilot U | The Trading Coach</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
-	#library-list p {
+    #library-list p {
     word-break: break-word; /* Prevents long words from breaking the layout */
     max-height: 400px;      /* Adds a scrollbar if the text is EXTREMELY long */
     overflow-y: auto;
     padding-right: 5px;
 }
-	
-	/* Add this to your <style> section */
+    
+    /* Add this to your <style> section */
 #library-list .stat-card {
     transition: transform 0.2s, border-color 0.2s;
     cursor: default;
@@ -36,7 +36,7 @@
     text-decoration: underline;
     color: white !important;
 }
-	
+    
         :root {
             --bg-dark: #0f111a;
             --bg-card: #1b1e2b;
@@ -68,6 +68,56 @@
             width: 100%;
             padding-bottom: 50px;
         }
+
+        /* --- ACCORDION STYLES --- */
+        .accordion-item {
+            background: var(--bg-panel);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .accordion-header {
+            padding: 18px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .accordion-header:hover { background: rgba(255,255,255,0.03); }
+        .accordion-content {
+            display: none;
+            padding: 10px;
+            background: var(--bg-dark);
+            border-top: 1px solid var(--border);
+        }
+        .accordion-item.active .accordion-content { display: block; }
+        .accordion-item.active .accordion-header { background: rgba(139, 92, 246, 0.05); border-bottom: 1px solid var(--border); }
+
+        .acc-asset-title { font-size: 18px; font-weight: bold; color: white; }
+        .acc-asset-stats { font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
+        .acc-asset-profit { font-size: 20px; font-weight: 800; }
+
+        .trade-card {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .trade-card:last-child { border-bottom: none; }
+        .trade-card-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .trade-card-type { font-size: 16px; font-weight: bold; padding: 4px 10px; border-radius: 6px; }
+        .trade-card-profit { font-size: 22px; font-weight: 900; }
+        
+        .trade-card-grid { 
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; 
+            background: rgba(255,255,255,0.02); padding: 12px; border-radius: 8px; margin-bottom: 8px;
+        }
+        .grid-item-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; display: block; }
+        .grid-item-val { font-size: 15px; color: var(--text-main); font-weight: bold; }
+
+        .trade-card-footer { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); }
+        .session-badge { font-weight: bold; color: var(--accent); }
 
         /* --- FINAL TABLE SCROLL FIX --- */
         .matrix-wrapper {
@@ -273,7 +323,11 @@
             </div>
         </div>
 
-        <div class="table-container">
+        <!-- NEW: SYMBOL WISE PERFORMANCE SECTION -->
+        <h2 style="margin-bottom:15px; color:var(--text-main)">📊 Symbol Analytics (Sorted by Profit)</h2>
+        <div id="symbol-analytics-container"></div>
+
+        <div class="table-container" style="margin-top: 30px;">
             <div class="table-header">
                 <span>Symbol Performance (Grouped by Magic ID)</span>
             </div>
@@ -309,7 +363,7 @@
                     <div class="checkbox-group" id="ai-columns">
                     </div>
 
-			<h4 style="margin-top:20px;">3. Data Filters (Post-Mortem)</h4>
+            <h4 style="margin-top:20px;">3. Data Filters (Post-Mortem)</h4>
 <div style="background: var(--bg-dark); padding: 12px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px;">
     <div>
         <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 4px;">Trade Result</label>
@@ -413,7 +467,7 @@
 
 <script>
 
-	let deferredPrompt;
+    let deferredPrompt;
 
 function initPWA() {
     // 1. Generate Manifest as Data URI
@@ -488,7 +542,7 @@ async function installApp() {
     window.onload = async () => {
         loadSettings();
         setupAIControls();
-		initPWA();
+        initPWA();
         
         // Fetch Lexicon/Strategies immediately if the URL is saved
         if (STATE.config.url) {
@@ -501,8 +555,8 @@ async function installApp() {
         STATE.config.key = localStorage.getItem('tp_key') || '';
         if(!STATE.config.url) toggleSettings();
     }
-	
-	async function fetchLexicon() {
+    
+    async function fetchLexicon() {
         try {
             console.log("Lexicon Sync: Initiating...");
             const response = await fetch(`${STATE.config.url}?action=getLexicon`);
@@ -685,23 +739,58 @@ async function loadLibrary() {
         }
     }
 
+    function getSession(timeStr) {
+        if (!timeStr) return "Other";
+        const timeMatch = timeStr.match(/(\d{2}):(\d{2})/);
+        if (!timeMatch) return "Other";
+        const h = parseInt(timeMatch[1]);
+        if (h >= 7 && h <= 11) return "London";
+        if (h >= 12 && h <= 20) return "NY";
+        if (h >= 23 || h <= 5) return "Asia";
+        return "Other";
+    }
+
+    /**
+     * Robust number parsing to handle currency symbols and commas
+     */
+    function parseProfit(val) {
+        if (typeof val === 'number') return val;
+        if (!val) return 0;
+        // Strip everything except numbers, decimal point, and negative sign
+        const cleaned = val.toString().replace(/[^\d.-]/g, '');
+        return parseFloat(cleaned) || 0;
+    }
+
     function processData(rawData) {
         STATE.currentData = rawData;
         const headers = rawData[0].map(h => String(h).toLowerCase().trim());
         
+        // Find indices using exact or smart partial matches to avoid grabbing "Setup" columns
         const map = {
-            symbol: headers.findIndex(h => h.includes('symbol')),
+            symbol: headers.findIndex(h => h === "symbol" || h === "asset"),
             magic: headers.findIndex(h => h.includes('magic')),
-            pnl: headers.findIndex(h => h.includes('profit') || h.includes('pnl')),
-            mae: headers.findIndex(h => h.includes('mae usd')),
-            waitAlpha: headers.findIndex(h => h.includes('wait alpha')),
-            status: headers.findIndex(h => h.includes('status'))
+            pnl: headers.findIndex(h => h === "profit" || h === "pnl" || h === "profit (usd)"),
+            mae: headers.findIndex(h => h.includes('mae')),
+            waitAlpha: headers.findIndex(h => h.includes('wait alpha') || h.includes('alpha decay')),
+            status: headers.findIndex(h => h === "status" || h === "comment"),
+            type: headers.findIndex(h => h === "type" || h === "side"),
+            sl: headers.findIndex(h => h === "setup sl" || h === "sl"),
+            tp: headers.findIndex(h => h === "setup tp" || h === "tp"),
+            ts: headers.findIndex(h => h.includes('trailing')),
+            openTime: headers.findIndex(h => h.includes('open time'))
         };
+
+        // Fallback for indices if exact match fails
+        if (map.symbol === -1) map.symbol = headers.findIndex(h => h.includes('symbol'));
+        if (map.pnl === -1) map.pnl = headers.findIndex(h => h.includes('profit') || h.includes('pnl'));
+        if (map.status === -1) map.status = headers.findIndex(h => h.includes('status'));
+
         STATE.universalCols = map;
 
         const stats = {};
         let globalPnl = 0, globalWins = 0, globalTrades = 0, grossWin = 0, grossLoss = 0;
         const symbolSet = new Set();
+        const assetSummary = {};
 
         for(let i=1; i<rawData.length; i++) {
             const row = rawData[i];
@@ -710,24 +799,55 @@ async function loadLibrary() {
             symbolSet.add(sym);
 
             const mag = row[map.magic] || 'Manual';
-            const pnl = parseFloat(row[map.pnl]) || 0;
+            const pnl = parseProfit(row[map.pnl]);
+            const type = (row[map.type] || "Unknown").toString().toUpperCase();
             const key = `${sym} (${mag})`;
 
+            // 1. Existing Grouping for Matrix
             if(!stats[key]) stats[key] = { name: key, symbol: sym, count: 0, pnl: 0, wins: 0, maeSum: 0, waitAlphaSum: 0 };
             stats[key].count++;
             stats[key].pnl += pnl;
             globalPnl += pnl;
             globalTrades++;
             if(pnl > 0) { stats[key].wins++; globalWins++; grossWin += pnl; } else { grossLoss += Math.abs(pnl); }
-            if(map.mae > -1) stats[key].maeSum += (parseFloat(row[map.mae]) || 0);
-            if(map.waitAlpha > -1) stats[key].waitAlphaSum += (parseFloat(row[map.waitAlpha]) || 0);
+            if(map.mae > -1) stats[key].maeSum += (parseProfit(row[map.mae]));
+            if(map.waitAlpha > -1) stats[key].waitAlphaSum += (parseProfit(row[map.waitAlpha]));
+
+            // 2. New Grouping for Symbol Analytics (Clean Symbol Only)
+            if(!assetSummary[sym]) {
+                assetSummary[sym] = { 
+                    name: sym, totalPnl: 0, totalCount: 0, totalWins: 0, 
+                    buyCount: 0, buyWins: 0, sellCount: 0, sellWins: 0, 
+                    trades: [] 
+                };
+            }
+            assetSummary[sym].totalPnl += pnl;
+            assetSummary[sym].totalCount++;
+            if (pnl > 0) assetSummary[sym].totalWins++;
+            
+            if (type.includes("BUY")) {
+                assetSummary[sym].buyCount++;
+                if (pnl > 0) assetSummary[sym].buyWins++;
+            } else if (type.includes("SELL")) {
+                assetSummary[sym].sellCount++;
+                if (pnl > 0) assetSummary[sym].sellWins++;
+            }
+
+            assetSummary[sym].trades.push({
+                type: type,
+                pnl: pnl,
+                openTime: row[map.openTime] || "N/A",
+                sl: row[map.sl] || "0",
+                tp: row[map.tp] || "0",
+                ts: row[map.ts] || "0"
+            });
         }
 
         STATE.processedStats = Object.values(stats);
         document.getElementById('stat-pnl').innerText = globalPnl.toFixed(2);
         document.getElementById('stat-trades').innerText = globalTrades;
         document.getElementById('stat-winrate').innerText = (globalTrades === 0 ? "0%" : ((globalWins/globalTrades)*100).toFixed(1) + '%');
-        document.getElementById('stat-pf').innerText = (grossLoss === 0 ? grossWin : (grossWin/grossLoss)).toFixed(2);
+        document.getElementById('stat-pf').innerText = (grossLoss === 0 ? grossWin.toFixed(2) : (grossWin/grossLoss).toFixed(2));
 
         const aiSymbolList = document.getElementById('ai-symbol-list');
         aiSymbolList.innerHTML = '';
@@ -739,8 +859,58 @@ async function loadLibrary() {
         });
 
         renderTable();
+        renderSymbolAnalytics(assetSummary);
         setupAIControls();
         setupPromptEditor();
+    }
+
+    function renderSymbolAnalytics(assetSummary) {
+        const container = document.getElementById('symbol-analytics-container');
+        container.innerHTML = '';
+
+        // Order by most profitable asset
+        const sortedAssets = Object.values(assetSummary).sort((a,b) => b.totalPnl - a.totalPnl);
+
+        sortedAssets.forEach(asset => {
+            const winRate = ((asset.totalWins / asset.totalCount) * 100).toFixed(1);
+            const buyWRCont = ((asset.buyWins / asset.totalCount) * 100).toFixed(1);
+            const sellWRCont = ((asset.sellWins / asset.totalCount) * 100).toFixed(1);
+
+            const div = document.createElement('div');
+            div.className = 'accordion-item';
+            
+            div.innerHTML = `
+                <div class="accordion-header" onclick="this.parentElement.classList.toggle('active')">
+                    <div>
+                        <div class="acc-asset-title">${asset.name} [${asset.totalCount}]</div>
+                        <div class="acc-asset-stats">Win ${winRate}% (Buy ${buyWRCont}% / Sell ${sellWRCont}%)</div>
+                    </div>
+                    <div class="acc-asset-profit ${asset.totalPnl >= 0 ? 'text-green' : 'text-red'}">
+                        $${asset.totalPnl.toFixed(2)}
+                    </div>
+                </div>
+                <div class="accordion-content">
+                    ${asset.trades.reverse().map(t => `
+                        <div class="trade-card">
+                            <div class="trade-card-main">
+                                <span class="trade-card-type ${t.type.includes('BUY') ? 'text-green' : 'text-red'}">${t.type}</span>
+                                <span class="trade-card-profit ${t.pnl >= 0 ? 'text-green' : 'text-red'}">$${t.pnl.toFixed(2)}</span>
+                            </div>
+                            <div class="trade-card-grid">
+                                <div><span class="grid-item-label">SL</span><span class="grid-item-val">${t.sl}</span></div>
+                                <div><span class="grid-item-label">TP</span><span class="grid-item-val">${t.tp}</span></div>
+                                <div><span class="grid-item-label">TS</span><span class="grid-item-val">${t.ts}</span></div>
+                            </div>
+                            <div class="trade-card-footer">
+                                <span>${t.openTime}</span>
+                                <span class="session-badge">${getSession(t.openTime)} Session</span>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            container.appendChild(div);
+        });
     }
 
     function renderTable() {
@@ -939,7 +1109,9 @@ ${lexiconText}
             const headers = STATE.currentData[0];
             const symIdx = STATE.universalCols.symbol;
             const statIdx = STATE.universalCols.status;
-            const validStatuses = ["TP Hit", "SL Hit", "Stealth SL", "Manual/Broker Exit"];
+            
+            // Standardize Valid Statuses (Case-Insensitive)
+            const validStatusKeys = ["TP", "SL", "STEALTH", "MANUAL", "BROKER", "EXIT"];
 
             // 1. Get filter values from the new UI boxes
     const filterResult = document.getElementById('filter-result').value;
@@ -949,12 +1121,15 @@ ${lexiconText}
     // 2. Apply filtering to the trade data
     const filteredRows = STATE.currentData.slice(1).filter(row => {
         const symMatch = selectedSymbols.includes(String(row[symIdx]));
-        const statMatch = validStatuses.includes(String(row[statIdx]).trim());
+        
+        // Smart Status Check
+        const currentStatus = String(row[statIdx] || "").toUpperCase();
+        const statMatch = validStatusKeys.some(key => currentStatus.includes(key));
         
         // Pull actual values from the row to check against filters
-        const profit = parseFloat(row[STATE.universalCols.pnl]) || 0;
-        const mae = Math.abs(parseFloat(row[STATE.universalCols.mae]) || 0); 
-        const alpha = parseFloat(row[STATE.universalCols.waitAlpha]) || 0;
+        const profit = parseProfit(row[STATE.universalCols.pnl]);
+        const mae = Math.abs(parseProfit(row[STATE.universalCols.mae])); 
+        const alpha = parseProfit(row[STATE.universalCols.waitAlpha]);
 
         // Logic for Win/Loss filter
         let resultMatch = true;
@@ -1104,15 +1279,15 @@ async function archiveInsight() {
     function generateSummaryTables(data, activeMetrics) {
     const headers = data[0].map(h => String(h).trim());
     const rows = data.slice(1);
-    const validStatuses = ["TP Hit", "SL Hit", "Stealth SL", "Manual/Broker Exit"];
     
-    // 1. SURGICAL FIX: Use STATE mapping to ensure all symbols are detected correctly
+    // Standardize Valid Statuses (Case-Insensitive)
+    const validStatusKeys = ["TP", "SL", "STEALTH", "MANUAL", "BROKER", "EXIT"];
+
     const symIdx = STATE.universalCols.symbol;
     const magIdx = STATE.universalCols.magic;
     const statIdx = STATE.universalCols.status;
     const pnlIdx = STATE.universalCols.pnl;
     
-    // Find dynamic columns that aren't in the global state
     const typeIdx = headers.findIndex(h => h.toLowerCase().includes("type"));
     const tfIdx = headers.findIndex(h => h.toLowerCase().includes("tf"));
     const openTimeIdx = headers.findIndex(h => h.toLowerCase().includes("open time"));
@@ -1127,19 +1302,18 @@ async function archiveInsight() {
     let maxDate = new Date(-8640000000000000);
 
     rows.forEach(row => {
-        const status = String(row[statIdx]).trim();
-        if (!validStatuses.includes(status)) return;
+        // Smart Status Check for Filtering
+        const currentStatus = String(row[statIdx] || "").toUpperCase();
+        if (!validStatusKeys.some(key => currentStatus.includes(key))) return;
 
-        // Grouping logic: Ensure Symbol and Magic are both used to create unique keys
         const sym = row[symIdx] || "Unknown";
         const mag = row[magIdx] || "Manual";
         const groupKey = `${sym} (${mag})`; 
 
         const type = row[typeIdx] || "N/A";
         const tf = row[tfIdx] || "N/A";
-        const profit = parseFloat(row[pnlIdx]) || 0;
+        const profit = parseProfit(row[pnlIdx]);
         
-        // Duration Tracking
         if (openTimeIdx > -1) {
             const openTime = new Date(row[openTimeIdx]);
             if (openTime.getTime() < minDate.getTime()) minDate = openTime;
@@ -1157,7 +1331,7 @@ async function archiveInsight() {
             if (profit > 0) obj[key].wins++;
             obj[key].net += profit;
             metricIndices.forEach(m => {
-                const val = parseFloat(row[m.idx]) || 0;
+                const val = parseProfit(row[m.idx]);
                 obj[key].metrics[m.name] += val;
             });
         };
@@ -1168,7 +1342,6 @@ async function archiveInsight() {
 
     let output = `### 📅 ANALYSIS DURATION\n**Period:** ${minDate < new Date() ? minDate.toLocaleDateString() : 'Start'} to ${maxDate > new Date(0) ? maxDate.toLocaleDateString() : 'End'}\n\n`;
     
-    // Iterate through EVERY group in the portfolio object
     for (let key in portfolio) {
         output += `#### 🧬 ASSET GROUP: ${key}\n`;
         
